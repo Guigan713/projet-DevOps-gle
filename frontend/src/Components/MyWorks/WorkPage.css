@@ -1,0 +1,44 @@
+.workpage-item-img {
+    width: 98%;
+    height: 400px;
+    overflow: hidden;
+    border-radius: 12px;
+    display: inline-block;
+    border: 3px solid var(--gray-2);
+    margin: 1.5rem;
+}
+
+.workpage-img {
+    height: 100%;
+}
+
+.workpage-item-info {
+    background-color: var(--deep-dark);
+    padding: 1rem;
+    border-radius: 12px;
+    margin: 1.5rem;
+    text-align: center;
+}
+
+.workpage-item-title, .workpage-item-brand {
+    font-size: 2.2rem;
+    color: #C7D1DF;
+    font-family: 'Architects Daughter', cursive;
+}
+
+.workpage-item-p, .workpage-item-m {
+    font-size: 2rem;
+    font-family: 'Patrick Hand', cursive;
+    margin-top: 1rem;
+    color: var(--gray-1);
+}
+
+@media only screen and (max-width: 768px) {
+    .workpage-item-img {
+        height: 350px;
+        width:95%;
+    }
+    .workpage-img {
+        width: 100%;
+    }
+}

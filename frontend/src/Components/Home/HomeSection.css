@@ -1,0 +1,184 @@
+
+
+.home {
+    height: 100vh;
+    min-height: 1000px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.home-heading {
+    font-size: 2rem;
+    margin-bottom: -4rem;
+    position: relative;
+}
+
+h1 {
+    color: var(--white);
+}
+
+.home-hello {
+    font-size: 3rem;
+    color: #7E4775;
+    font-family: 'Permanent Marker', cursive;
+}
+
+span {
+    display: inline-block;
+    width: 100%;
+}
+
+.home-name {
+    font-size: 7rem;
+    font-family: 'Permanent Marker', cursive;
+    color: #3BD5C0;
+}
+
+.home-img {
+    max-width: 750px;
+    width: 100%;
+    height: 600px;
+    margin: 0 auto;
+    border: 2px solid var(--gray-2);
+}
+
+.home-infos {
+    margin-top: -4rem;
+    font-size: 5rem;
+    color: #D45071;
+    font-family: 'Permanent Marker', cursive;
+}
+
+
+#social-arrow {
+    color: #3BD5C0;
+    font-family: 'Permanent Marker', cursive;
+    font-style: italic;
+    font-size: 2.5rem;
+    transform: translateY(-70px) rotate(90deg);
+}
+
+.home-social, .home-scrollDown {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: absolute;
+    bottom: 5px;
+    width: 50px;
+}
+
+.home-social {
+    left: 50px;
+}
+
+.home-social-indicator, .home-scrollDown {
+    width: 50px;
+}
+
+
+.arrow {
+    max-height: 65px;
+    width: 25px;
+    margin: 0auto;
+    object-fit: contain;
+}
+
+.li {
+    margin-bottom: 1rem;
+}
+.logo-fb{
+    display: inline-block;
+    font-size: 4rem;
+    transform: rotate(45deg);
+    letter-spacing: 5px;
+    margin-bottom: 2rem;
+    color: #3b5998;
+}
+
+.logo-insta{
+    display: inline-block;
+    font-size: 4rem;
+    transform: rotate(45deg);
+    letter-spacing: 5px;
+    margin-bottom: 2rem;
+    color: #C13584;
+}
+
+.logo-twitter{
+    display: inline-block;
+    font-size: 4rem;
+    transform: rotate(45deg);
+    letter-spacing: 5px;
+    margin-bottom: 2rem;
+    color: #1DA1F2;
+}
+
+.logo-git{
+    display: inline-block;
+    font-size: 3rem;
+    transform: rotate(45deg);
+    letter-spacing: 5px;
+    margin-bottom: 2rem;
+    color: #211F1F;
+}
+
+.logo-git svg {
+    background: white;
+}
+
+.logo-linkedin{
+    display: inline-block;
+    font-size: 4rem;
+    transform: rotate(45deg);
+    letter-spacing: 5px;
+    margin-bottom: 2rem;
+    color: #0e76a8 ;
+}
+
+/* RESPONSIVE */
+
+@media only screen and (max-width: 768px) {
+    .home {
+        min-height: 750px;
+        margin-left: 1rem;
+    }
+    .home-heading {
+        font-size: 1.4rem;
+        margin-bottom: -3rem;
+    }
+    .home-name {
+        font-size: 4.5rem;
+    }
+    .home-img {
+        height: 300px;
+        width: 85%;
+    }
+    .home-infos {
+        margin-top: 1rem;
+        font-size: 3rem;
+    }
+    .home-social {
+        left: 10px;
+        bottom: 15%;
+        width: 20px;
+    }
+    .home-social-indicator {
+        width: 20px;
+    }
+    #social-ind {
+        font-size: 1.2rem;
+    }
+    #social-arrow {
+        max-height: 22px;
+        font-size: 2rem;
+    }
+    a {
+        font-size: 1.9rem;
+        margin-bottom: 1rem;
+    }
+}
+

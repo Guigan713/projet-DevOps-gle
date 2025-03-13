@@ -1,0 +1,21 @@
+.footercol-heading {
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    color: #DDECFC;
+    font-family: 'Days One', sans-serif;
+}
+
+.footercol-li {
+    margin-bottom: 1rem;
+}
+
+.footercol-link {
+    color: var(--gray-1);
+    font-size: 2.3rem;
+    font-family: 'Audiowide', cursive;
+}
+
+.footercol-a {
+    font-size: 2rem;
+    color: var(--gray-1);
+}

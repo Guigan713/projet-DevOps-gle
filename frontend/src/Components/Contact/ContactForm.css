@@ -1,0 +1,48 @@
+.contact-form-container {
+    width: 100%;
+}
+
+.form-group {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+label {
+    font-size: 1.8rem;
+    color: var(--gray-1);
+}
+
+input, textarea {
+    width: 100%;
+    font-size: 2rem;
+    padding: 1.2rem;
+    color: var(--gray-1);
+    background-color: var(--deep-dark);
+    outline: none;
+    border: none;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.form-name {
+    color: #C7D1DF;
+    font-family: 'Gugi', cursive;
+}
+
+textarea {
+    min-height: 250px;
+    resize: vertical;
+}
+
+button[type='submit'] {
+    background-color: #C7D1DF;
+    color: black;
+    font-size: 2rem;
+    display: inline-block;
+    outline: none;
+    border: none;
+    padding: 1rem 4rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Gugi', cursive;
+}

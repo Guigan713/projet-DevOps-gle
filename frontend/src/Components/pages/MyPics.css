@@ -1,0 +1,30 @@
+.mypics-wrapper {
+    padding: 10rem 4rem 4rem 4rem;
+}
+
+.mypics-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.mypics-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    color: var(--gray-1);
+}
+
+.mypics-heading {
+    font-family: 'Russo One', sans-serif;
+    font-size: 6rem;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+    color: #C7D1DF;
+}
+
+.mypics-allitems {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 3rem;
+}

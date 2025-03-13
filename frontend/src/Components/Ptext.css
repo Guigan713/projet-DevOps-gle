@@ -1,0 +1,13 @@
+.p-text-container {
+    max-width: 500px;
+    margin: 0 auto;
+    font-size: 1.8rem;
+    line-height: 1.3em;
+    color: var(--gray-1);
+}
+
+@media only screen and (max-width: 768px) {
+    .p-text-container {
+        font-size: 1.4rem;
+    }
+}

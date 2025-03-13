@@ -1,0 +1,58 @@
+.contact-section-general {
+    padding: 10rem 0;
+    margin: 3rem;
+}
+
+.contact-section-wrapper {
+    display: flex;
+    gap: 5rem;
+    margin-top: 7rem;
+    justify-content: space-around;
+    position: relative;
+}
+
+.contact-section-wrapper::after {
+    position: absolute;
+    content: '';
+    width: 2px;
+    height: 50%;
+    background-color: var(--gray-1);
+    left: 50%;
+    top: 30%;
+    transform: translate(-50%, -50%);
+}
+
+.contact-heading {
+    background: -webkit-linear-gradient(#ffff, #C7D1DF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 7rem;
+    text-align: center;
+    font-family: 'Russo One', sans-serif;
+}
+
+.left {
+    width: 100%;
+    max-width: 500px;
+    margin-top: 4rem;
+}
+.right {
+    max-width: 500px;
+    width: 100%;
+    border-radius: 12px;
+    /* padding-left: 3rem; */
+}
+@media screen and (max-width: 768px) {
+    .contact-section-wrapper {
+        flex-direction: column;
+    }
+    .contact-section-wrapper::after {
+        display: none;
+    }
+    .left, .right {
+        max-width: 100%;
+    }
+    /* .right {
+        padding: 4rem 2rem 2rem 2rem;
+    } */
+}

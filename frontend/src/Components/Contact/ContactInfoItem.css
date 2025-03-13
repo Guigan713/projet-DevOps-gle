@@ -1,0 +1,31 @@
+.contact-info-wrapper {
+    padding: 2rem;
+    background-color: var(--deep-dark);
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.icon {
+    color: #C7D1DF;
+    background-color: var(--gray-2);
+    padding: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.icon svg {
+    width: 3.5rem;
+}
+
+.info {
+    background: -webkit-linear-gradient(#ffff, #C7D1DF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: 'Gugi', cursive;
+}
+
