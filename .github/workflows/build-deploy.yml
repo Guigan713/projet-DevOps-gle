@@ -1,0 +1,22 @@
+name: Build & deploy projet DevOps
+
+on:
+  push:
+    branches:
+      - build
+
+jobs:
+  build-docker-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Backend Image
+        run: |
+          docker build -t backend:latest ./backend
+
+      - name: Build Frontend Image
+        run: |
+          docker build -t frontend:latest ./frontend

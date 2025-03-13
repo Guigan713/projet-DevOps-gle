@@ -1,0 +1,61 @@
+name: Test Workflow
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    test-backend:
+        name: Test Backend
+        runs-on: ubuntu-latest
+        services:
+            mysql:
+                image: mysql:latest
+                env:
+                    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+                    MYSQL_DATABASE: ${MYSQL_DATABASE}
+                    MYSQL_USER: ${MYSQL_USER}
+                    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+                ports:
+                    - 3306:3306
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: 22
+
+            - name: Install dependencies
+              run: |
+                cd backend
+                npm install
+
+            - name: Run backend tests
+              run: |
+                cd backend
+                npm test
+
+    # test-frontend:
+    #     name: Test Frontend
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: Checkout code
+    #           uses: actions/checkout@v4
+
+    #         - name: Set up Node.js
+    #           uses: actions/setup-node@v4
+    #           with:
+    #             node-version: 22
+
+    #         - name: Install dependencies
+    #           run: |
+    #             cd frontend
+    #             npm install
+
+    #         - name: Run frontend tests
+    #           run: |
+    #             cd frontend
+    #             npm test
