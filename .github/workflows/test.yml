@@ -4,14 +4,18 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  test-backend:
-    name: Test Backend
-    runs-on: ubuntu-latest
+  test-and-analyze:
+    name: Run tests & analyze with SonarQube
+    runs-on: ubuntu:latest
+
     services:
       mysql:
-        image: mysql:latest
+        image: mysql:9
         env:
           MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
           MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -19,44 +23,61 @@ jobs:
           MYSQL_PASSWORD: ${MYSQL_PASSWORD}
         ports:
           - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=localhost --user=root --password=${MYSQL_ROOT_PASSWORD}"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      # Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
 
-      - name: Install dependencies
+      # installation des dépendences
+      - name: Install dependencies Back
         run: |
           cd backend
           npm install
 
-      # - name: Run backend tests
-      #   run: |
-      #     cd backend
-      #     npx jest
+      - name: Install dependencies Front
+        run: |
+          cd frontend
+          npm install
 
-    # test-frontend:
-    #     name: Test Frontend
-    #     runs-on: ubuntu-latest
-    #     steps:
-    #         - name: Checkout code
-    #           uses: actions/checkout@v4
+      # Run Tests
+      - name: Run Frontend Tests
+        working-directory: frontend
+        run: npm test -- --ci --coverage
 
-    #         - name: Set up Node.js
-    #           uses: actions/setup-node@v4
-    #           with:
-    #             node-version: 22
+      - name: Run Backend Tests
+        working-directory: backend
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: ${MYSQL_USER}
+          DB_PASSWORD: ${MYSQL_PASSWORD}
+          DB_NAME: ${MYSQL_DATABASE}
+        run: npm test -- --ci --coverage
 
-    #         - name: Install dependencies
-    #           run: |
-    #             cd frontend
-    #             npm install
-
-    #         - name: Run frontend tests
-    #           run: |
-    #             cd frontend
-    #             npm test
+      # SonarQube Analysis
+      - name: SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          npm install -g sonarqube-scanner
+          sonar-scanner \
+            -Dsonar.projectKey=my-project \
+            -Dsonar.organization=${{ secrets.SONAR_ORG }} \
+            -Dsonar.sources=backend,frontend \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.language=js \
+            -Dsonar.coverage.exclusions=**/node_modules/**,**/*.test.js \
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info

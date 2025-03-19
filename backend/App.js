@@ -1,10 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const nodemailer = require("nodemailer");
+// const nodemailer = require("nodemailer");
 const connection = require('./config/db');
 const routes = require('./routes/index')
-const router = express.Router();
+// const router = express.Router();
 const path = require('path');
 
 const port = process.env.PORT || 5000
@@ -15,7 +15,6 @@ app.use(morgan('tiny'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use('/images', express.static(path.join(__dirname + '/public/images')));
-// app.use("/", router);
 
 connection.connect(err => {
     if (err) {
@@ -31,6 +30,7 @@ app.use('/home', routes.home)
 app.use('/about', routes.about)
 app.use('/aboutme', routes.aboutme)
 app.use('/snaps', routes.snaps)
+// app.use('/monitor', routes.monitor)
 
 app.get('/', (req, res) => {
     res.status(200).send('je suis dans le truc /')
