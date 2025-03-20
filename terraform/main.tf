@@ -17,7 +17,7 @@ resource "aws_subnet" "private_subnet" {
     cidr_block = "10.0.2.0/24"
 }
 
-# Security group public (frontend, bastion host et reverse proxy)
+# Security group public (frontend et reverse proxy)
 resource "aws_security_group" "sg_public" {
   vpc_id = aws_vpc.main_vpc.id
 
@@ -120,18 +120,6 @@ resource "aws_instance" "reverse_proxy" {
 
     tags = {
         Name = "Reverse-Proxy"
-    }
-}
-
-resource "aws_instance" "bastion" {
-    ami = "ami-04b4f1a9cf54c11d0"
-    instance_type = "t2.micro"
-    subnet_id = aws.subnet.public_subnet.id
-    security_groups = [aws_security_group.sg_public.id]
-    associate_public_ip_address = false
-
-    tags = {
-        Name = "Bastion-Host"
     }
 }
 
