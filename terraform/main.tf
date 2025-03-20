@@ -104,7 +104,7 @@ resource "aws_instance" "frontend" {
     instance_type = "t2.micro"
     subnet_id = aws.subnet.public_subnet.id
     security_groups = [aws_security_group.sg_public.id]
-    associate_public_ip_address = true # Sensitive
+    associate_public_ip_address = false
 
     tags = {
         Name = "Frontend-ReactJS"
@@ -116,7 +116,7 @@ resource "aws_instance" "reverse_proxy" {
     instance_type = "t2.micro"
     subnet_id = aws.subnet.public_subnet.id
     security_groups = [aws_security_group.sg_public.id]
-    associate_public_ip_address = true # Sensitive
+    associate_public_ip_address = false
 
     tags = {
         Name = "Reverse-Proxy"
@@ -128,7 +128,7 @@ resource "aws_instance" "bastion" {
     instance_type = "t2.micro"
     subnet_id = aws.subnet.public_subnet.id
     security_groups = [aws_security_group.sg_public.id]
-    associate_public_ip_address = true # Sensitive
+    associate_public_ip_address = false
 
     tags = {
         Name = "Bastion-Host"
@@ -140,7 +140,7 @@ resource "aws_instance" "backend" {
     instance_type = "t2.micro"
     subnet_id = aws.subnet.private_subnet.id
     security_groups = [aws_security_group.sg_private.id]
-    associate_public_ip_address = false # Sensitive
+    associate_public_ip_address = false
 
     tags = {
         Name = "Backend-NodeJS"
@@ -152,7 +152,7 @@ resource "aws_instance" "database" {
   instance_type   = "t2.micro"
   subnet_id       = aws_subnet.private_subnet.id
   security_groups = [aws_security_group.sg_private.id]
-  associate_public_ip_address = false # Sensitive
+  associate_public_ip_address = false
 
   tags = {
     Name = "Database-MySQL"
@@ -164,7 +164,7 @@ resource "aws_instance" "monitoring" {
   instance_type   = "t2.medium"
   subnet_id       = aws_subnet.private_subnet.id
   security_groups = [aws_security_group.sg_private.id]
-  associate_public_ip_address = false # Sensitive
+  associate_public_ip_address = false
 
   tags = {
     Name = "Monitoring"
