@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - test
   pull_request:
     branches:
       - main
@@ -79,7 +80,7 @@ jobs:
             -Dsonar.sources=backend,frontend \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
-            -Dsonar.branch.name=main \
+            -Dsonar.branch.name=test \
             -Dsonar.language=js \
             -Dsonar.coverage.exclusions=**/node_modules/**,**/*.test.js \
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
