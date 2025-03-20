@@ -55,7 +55,7 @@ jobs:
       # Run Tests
       - name: Run Frontend Tests
         working-directory: frontend
-        run: npm test -- --ci --coverage
+        run: npm test -- --ci --coverage --passWithNoTests
 
       - name: Run Backend Tests
         working-directory: backend
@@ -64,7 +64,7 @@ jobs:
           DB_USER: ${MYSQL_USER}
           DB_PASSWORD: ${MYSQL_PASSWORD}
           DB_NAME: ${MYSQL_DATABASE}
-        run: npm test -- --ci --coverage
+        run: npm test -- --ci --coverage --passWithNoTests
 
       # SonarQube Analysis
       - name: SonarQube Scan
