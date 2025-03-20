@@ -8,7 +8,7 @@ on:
 jobs:
   deploy-infrastructure:
     name: Deploy AWS infrastructure
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
 
   create-ansible-inventory:
     name: Generate inventory
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: deploy-infrastructure
     steps:
       - name: Generate Ansible Inventory
@@ -51,7 +51,7 @@ jobs:
 
   configure-servers:
     name: Configure instances
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: deploy-infrastructure
     steps:
       - name: Checkout Code
@@ -71,7 +71,7 @@ jobs:
 
   deploy-backend:
     name: Deploy Backend
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: configure-servers
     steps:
       - name: Checkout Code
@@ -91,7 +91,7 @@ jobs:
 
   deploy-frontend:
     name: Deploy Frontend
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: configure-servers
     steps:
       - name: Checkout Code
@@ -111,7 +111,7 @@ jobs:
 
   deploy-database:
     name: Deploy MySQL DB
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: configure-servers
     steps:
       - name: Checkout Code
@@ -130,7 +130,7 @@ jobs:
 
   deploy-monitoring:
     name: Deploy Prometheus & Grafana
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: configure-servers
     steps:
       - name: Checkout Code

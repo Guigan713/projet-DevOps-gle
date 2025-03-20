@@ -11,7 +11,7 @@ on:
 jobs:
   test-and-analyze:
     name: Run tests & analyze with SonarQube
-    runs-on: ubuntu:latest
+    runs-on: ubuntu-22.04
 
     services:
       mysql:
