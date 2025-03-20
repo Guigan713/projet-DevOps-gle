@@ -26,7 +26,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --ci --coverage",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -51,6 +51,12 @@
     "@types/leaflet": "^1.7.5",
     "babel-eslint": "^10.1.0"
   },
-  "proxy": "http://localhost:5000"
+  "proxy": "http://localhost:5000",
+  "jest": {
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
+      "<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}"
+    ]
+  }
 
 }
