@@ -4,7 +4,6 @@ const morgan = require('morgan');
 // const nodemailer = require("nodemailer");
 const connection = require('./config/db');
 const routes = require('./routes/index')
-// const router = express.Router();
 const path = require('path');
 
 const port = process.env.PORT || 5000
