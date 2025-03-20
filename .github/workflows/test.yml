@@ -74,7 +74,7 @@ jobs:
         run: |
           npm install -g sonarqube-scanner
           sonar-scanner \
-            -Dsonar.projectKey=my-project \
+            -Dsonar.projectKey=projet-DevOps-gle \
             -Dsonar.organization=${{ secrets.SONAR_ORG }} \
             -Dsonar.sources=backend,frontend \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
