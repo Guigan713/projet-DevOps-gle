@@ -1,2 +1,12 @@
 .aws
 /aws
+.env
+/terraform/credentials
+terraform/terraform.tfvars
+terraform/.terraform.lock.hcl
+terraform/.terraform/
+terraform_gcp/terraform.tfvars
+terraform_gcp/credentials
+compose.yml
+ansible/group_vars
+.vscode

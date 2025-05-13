@@ -1,0 +1,29 @@
+- name: Déployer le frontend
+  hosts: frontend
+  become: true
+  roles:
+    - frontend
+
+- name: Déployer le backend
+  hosts: backend
+  become: true
+  roles:
+    - backend
+
+- name: Déployer la base de données
+  hosts: database
+  become: true
+  roles:
+    - database
+
+- name: Déployer Prometheus & Grafana
+  hosts: monitoring
+  become: true
+  roles:
+    - monitoring
+
+- name: Déployer le reverse proxy NGINX
+  hosts: reverse_proxy
+  become: true
+  roles:
+    - reverse-proxy

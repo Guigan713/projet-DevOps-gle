@@ -1,0 +1,18 @@
+#!/bin/bash
+
+DATE=$(date +%F_%H-%M)
+BACKUP_DIR="/var/backups/mysql"
+CONTAINER_NAME="{{ mysql_backup.container_name }}"
+DB_NAME="{{ mysql_backup.db_name }}"
+DB_USER="{{ mysql_backup.db_user }}"
+DB_PASSWORD="{{ mysql_backup.db_password }}"
+BACKUP_FILE="$BACKUP_DIR/${DB_NAME}_${DATE}.sql"
+
+mkdir -p $BACKUP_DIR
+
+docker exec $CONTAINER_NAME \
+  sh -c "mysqldump -u$DB_USER -p$DB_PASSWORD $DB_NAME" > $BACKUP_FILE
+
+find $BACKUP_DIR -type f -name "*.sql" -mtime +7 -exec rm {} \;
+
+aws s3 cp $BACKUP_FILE s3://{{ mysql_backup.s3_bucket }}/

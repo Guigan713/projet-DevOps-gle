@@ -1,61 +1,46 @@
 name: Deploy projet DevOps
 
 on:
-  push:
-    branches:
-      - build
+  workflow_run:
+    workflows: ["Test Workflow"]
+    types:
+      - completed
 
 jobs:
-  deploy-infrastructure:
-    name: Deploy AWS infrastructure
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Init Terraform
-        run: |
-          cd terraform
-          terraform init
-
-      - name: Apply Terraform
-        run: |
-          cd terraform
-          terraform apply -auto-approve
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-  create-ansible-inventory:
-    name: Generate inventory
-    runs-on: ubuntu-22.04
-    needs: deploy-infrastructure
-    steps:
-      - name: Generate Ansible Inventory
-        run: |
-          echo "[backend]" > ansible/inventory
-          echo "$(terraform output -raw backend_private_ip) ansible_user=ubuntu ansible_private_key_file=gle-key.pem" >> ansible/inventory
-
-          echo "[frontend]" >> ansible/inventory
-          echo "$(terraform output -raw frontend_ip) ansible_user=ubuntu ansible_private_key_file=gle-key.pem" >> ansible/inventory
-
-          echo "[database]" >> ansible/inventory
-          echo "$(terraform output -raw database_private_ip) ansible_user=ubuntu ansible_private_key_file=gle-key.pem" >> ansible/inventory
-
-          echo "[monitoring]" >> ansible/inventory
-          echo "$(terraform output -raw monitoring_private_ip) ansible_user=ubuntu ansible_private_key_file=gle-key.pem" >> ansible/inventory
-
-
   configure-servers:
     name: Configure instances
     runs-on: ubuntu-22.04
-    needs: deploy-infrastructure
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies & build frontend
+        run: |
+          cd frontend 
+          npm ci
+          npm run build
+
+      - name: Install dependencies & build backend
+        run: |
+          cd backend 
+          npm ci
+          npm run build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+  
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible boto3
+          ansible --version
 
       - name: Configure SSH Key
         run: |
@@ -65,84 +50,5 @@ jobs:
       - name: Run Ansible Playbook
         run: |
           cd ansible
-          ansible-playbook -i inventory setup.yml --private-key gle-key.pem
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: false
+          ansible-playbook -i inventories/hosts.ini playbooks/deploy.yml --private-key ../gle-key.pem
 
-  deploy-backend:
-    name: Deploy Backend
-    runs-on: ubuntu-22.04
-    needs: configure-servers
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Configure SSH Key
-        run: |
-          echo "${{ secrets.AWS_PRIVATE_KEY }}" > gle-key.pem
-          chmod 600 gle-key.pem
-
-      - name: Deploy Backend on EC2
-        run: |
-          ssh -i gle-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_BACKEND_HOST }} << 'EOF'
-          docker pull ${{ secrets.DOCKER_USERNAME }}/gle-app-backend:latest
-          docker-compose up -d backend
-          EOF
-
-  deploy-frontend:
-    name: Deploy Frontend
-    runs-on: ubuntu-22.04
-    needs: configure-servers
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Configure SSH Key
-        run: |
-          echo "${{ secrets.AWS_PRIVATE_KEY }}" > gle-key.pem
-          chmod 600 gle-key.pem
-
-      - name: Deploy Frontend on EC2
-        run: |
-          ssh -i gle-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_FRONTEND_HOST }} << 'EOF'
-          docker pull ${{ secrets.DOCKER_USERNAME }}/gle-app-frontend:latest
-          docker-compose up -d frontend
-          EOF
-
-  deploy-database:
-    name: Deploy MySQL DB
-    runs-on: ubuntu-22.04
-    needs: configure-servers
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Configure SSH Key
-        run: |
-          echo "${{ secrets.AWS_PRIVATE_KEY }}" > gle-key.pem
-          chmod 600 gle-key.pem
-
-      - name: Deploy Database on EC2
-        run: |
-          ssh -i gle-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_DB_HOST }} << 'EOF'
-          docker-compose up -d database
-          EOF
-
-  deploy-monitoring:
-    name: Deploy Prometheus & Grafana
-    runs-on: ubuntu-22.04
-    needs: configure-servers
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Configure SSH Key
-        run: |
-          echo "${{ secrets.AWS_PRIVATE_KEY }}" > gle-key.pem
-          chmod 600 gle-key.pem
-
-      - name: Deploy Prometheus & Grafana on EC2
-        run: |
-          ssh -i gle-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_MONITORING_HOST }} << 'EOF'
-          docker-compose up -d prometheus grafana
-          EOF

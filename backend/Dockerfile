@@ -1,11 +1,12 @@
 # Utilisation d'une image Node.js pour le backend
-FROM node:22
+FROM node:23-slim AS base
 
 # Définition du répertoire de travail
 WORKDIR /app
 
 # Copier les fichiers du projet
-COPY package.json package-lock.json ./
+COPY package*.json ./
+
 RUN npm install
 
 # Copier le reste du projet
@@ -18,4 +19,5 @@ COPY .env .env
 EXPOSE 5000
 
 # Démarrer l'application
-CMD ["npm", "start"]
+# CMD ["npm", "start"]
+CMD ["node", "server.js"]

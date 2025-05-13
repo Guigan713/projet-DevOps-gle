@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node_exporters'
+    static_configs:
+      - targets:
+          - '<PRIVATE_IP_FRONTEND>:9100'
+          - '<PRIVATE_IP_BACKEND>:9100'
+          - '<PRIVATE_IP_DB>:9100'
+          - '<PRIVATE_IP_REVERSE_PROXY>:9100'
+          - 'localhost:9100'
+
+  # Scraper cAdvisor (pour surveiller les conteneurs Docker)
+  # - job_name: 'cadvisor'
+  #   static_configs:
+  #     - targets: ['cadvisor--${ENVIRONMENT}:8080']
+
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['<PRIVATE_IP_BACKEND>:4000']

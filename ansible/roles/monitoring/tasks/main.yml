@@ -1,0 +1,29 @@
+- name: Installer Docker et Docker Compose
+  become: true
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-compose
+    state: present
+    update_cache: true
+
+- name: Créer le dossier de monitoring
+  ansible.builtin.file:
+    path: /home/ubuntu/monitoring
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copier les fichiers de configuration (docker-compose + prometheus.yml)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../monitoring/"
+    dest: /home/ubuntu/monitoring/
+    owner: ubuntu
+    group: ubuntu
+    mode: preserve
+
+- name: Lancer Docker Compose pour Prometheus et Grafana
+  ansible.builtin.command: docker-compose up -d
+  args:
+    chdir: /home/ubuntu/monitoring

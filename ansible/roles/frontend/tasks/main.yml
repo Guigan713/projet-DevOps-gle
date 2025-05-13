@@ -1,0 +1,20 @@
+- name: Create Frontend Directory
+  file:
+    path: /home/ubuntu/frontend
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copy Frontend Files
+  copy:
+    src: "{{ playbook_dir }}/../../frontend/"
+    dest: /home/ubuntu/frontend/
+    owner: ubuntu
+    group: ubuntu
+    mode: preserve
+
+- name: Exec Docker
+  command: docker-compose up -d
+  args:
+    chdir: /home/ubuntu/frontend

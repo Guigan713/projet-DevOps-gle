@@ -1,0 +1,9 @@
+services:
+  frontend:
+    container_name: frontend
+    restart: unless-stopped
+    build: .
+    ports:
+      - "80:3000"
+    environment:
+      REACT_APP_API_URL: http://<PRIVATE_IP_BACKEND>:5000
