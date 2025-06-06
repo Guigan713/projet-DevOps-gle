@@ -1,17 +1,18 @@
 resource "google_compute_network" "main" {
     name = "main-vpc"
     auto_create_subnetworks = false
+    project = var.project
 }
 
 resource "google_compute_subnetwork" "public" {
-    name = "public_subnet"
+    name = "public-subnet"
     ip_cidr_range = var.public_subnet_cidr
     network = google_compute_network.main.id
     region = var.region
 }
 
 resource "google_compute_subnetwork" "private" {
-  name = "private_subnet"
+  name = "private-subnet"
   ip_cidr_range = var.private_subnet_cidr
   network = google_compute_network.main.id
   region = var.region

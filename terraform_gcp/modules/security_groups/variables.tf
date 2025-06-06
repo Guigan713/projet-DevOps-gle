@@ -7,3 +7,8 @@ variable "mon_ip" {
   description = "Ton IP publique autorisée à accéder à SSH et aux outils de monitoring"
   type        = string
 }
+
+variable "vpc_name" {
+  description = "Nom du VPC"
+  type = string
+}

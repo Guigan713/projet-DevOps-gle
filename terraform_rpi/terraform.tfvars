@@ -1,0 +1,7 @@
+mysql_root_password = "Guigan7132630*"
+mysql_database = "sneakerportfolio"
+mysql_user = "guillaume"
+mysql_password = "Guigan7132630*"
+server_ip = "192.168.1.19"
+ssh_user = "Guillaume713"
+ssh_private_key_path = "~/.ssh.id_rsa"

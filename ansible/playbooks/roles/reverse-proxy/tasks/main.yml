@@ -1,0 +1,65 @@
+- name: Install Nginx + Certbot
+  apt:
+    name:
+      - nginx
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: yes
+
+- name: Start NGINX
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Remove default nginx configuration
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Copy nginx.conf file
+  template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/sites-available/{{ domain_name }}"
+    mode: '0644'
+  notify: Reload NGINX
+
+- name: Enable nginx site
+  file:
+    src: "/etc/nginx/sites-available/{{ domain_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ domain_name }}"
+    state: link
+  notify: reload nginx
+
+- name: Test nginx configuration
+  command: nginx -t
+  changed_when: false
+
+- name: Reload nginx
+  systemd:
+    name: nginx
+    state: reloaded
+
+- name: Wait for Website Online (for certbot)
+  uri:
+    url: 
+    method: GET
+  register: result
+  retries: 10
+  delay: 10
+  until: result.status == 200
+
+- name: Get a SSL certificate
+  command: >
+    certbot --nginx --non-interactive --agree-tos
+    --email {{ ssl_email }} -d {{ domain_name }}
+  args:
+    creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+
+- name: Setup certbot auto-renewal
+  cron:
+    name: "Certbot auto-renewal"
+    minute: "0"
+    hour: "12"
+    job: "/usr/bin/certbot renew --quiet"

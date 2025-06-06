@@ -1,0 +1,14 @@
+database_host: "{{ database_private_ip }}"
+database_port: 3306
+database_name: "sneakerportfolio"
+database_user: "guillaume"
+
+# Configuration application
+app_name: "backend"
+app_port: 5000
+api_version: "v1"
+
+# Monitoring
+node_exporter_port: 9100
+enable_prometheus_metrics: true
+prometheus_metrics_port: 9101

@@ -1,0 +1,12 @@
+backend_api_url: "http://{{ backend_private_ip }}:5000"
+backend_host: "{{ backend_private_ip }}"
+backend_port: 5000
+
+# Configuration application
+app_name: "frontend"
+app_port: 3000
+node_env: "production"
+
+# Monitoring
+node_exporter_port: 9100
+enable_prometheus_metrics: true

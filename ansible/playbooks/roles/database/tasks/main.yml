@@ -1,0 +1,44 @@
+- name: Installer Docker et Docker Compose
+  become: true
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-compose
+    state: present
+    update_cache: true
+
+- name: Create Database Directory
+  file:
+    path: /home/ubuntu/database
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copy MySQL Services Files
+  copy:
+    src: "{{ playbook_dir }}/../../database/"
+    dest: /home/ubuntu/database/
+    owner: ubuntu
+    group: ubuntu
+    mode: preserve
+
+- name: Exec Compose for Database
+  command: docker-compose up -d
+  args:
+    chdir: /home/ubuntu/database
+
+- name: Copier le script de backup MySQL
+  template:
+    src: mysql_backup.sh.j2
+    dest: /usr/local/bin/mysql_backup.sh
+    mode: '0700'
+  become: true
+
+- name: Ajouter la tâche cron
+  cron:
+    name: "Backup SQL chaque jour a 2h"
+    minute: "0"
+    hour: "2"
+    job: "/usr/local/bin/mysql_backup.sh >> /var/log/mysql_backup.log 2>&1"
+    user: root

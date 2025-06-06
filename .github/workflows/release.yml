@@ -2,15 +2,6 @@ name: Release Versionning
 
 on:
   workflow_dispatch:
-    inputs:
-      semver:
-        description: 'Which version do you want to increment? use MAJOR, MINOR or PATCH'
-        required: true
-        default: 'PATCH'
-      label:
-        description: 'Add labels. i.e final, alpha, rc'
-        required: false
-        default: ''
   push:
     branches:
       - main
@@ -25,13 +16,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Automatic Semver Release
-        uses: rui-costa/action-automatic-semver-releases@1.1.1
-        with:
-          TOKEN: '${{ secrets.PAT_TOKEN }}'
-          SEMVER: '${{ github.event.inputs.semver }}'
-          LABEL: '${{ github.event.inputs.label }}'
 
       - uses: googleapis/release-please-action@v4.2.0
         name: release-please action

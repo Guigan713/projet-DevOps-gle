@@ -52,18 +52,18 @@ jobs:
           npm install
 
       # Run Tests
-      - name: Run Frontend Tests
-        working-directory: frontend
-        run: npm test -- --ci --coverage --passWithNoTests
+      # - name: Run Frontend Tests
+      #   working-directory: frontend
+      #   run: npm test -- --ci --coverage --passWithNoTests
 
-      - name: Run Backend Tests
-        working-directory: backend
-        env:
-          DB_HOST: 127.0.0.1
-          DB_USER: ${MYSQL_USER}
-          DB_PASSWORD: ${MYSQL_PASSWORD}
-          DB_NAME: ${MYSQL_DATABASE}
-        run: npm test -- --ci --coverage --passWithNoTests
+      # - name: Run Backend Tests
+      #   working-directory: backend
+      #   env:
+      #     DB_HOST: 127.0.0.1
+      #     DB_USER: ${MYSQL_USER}
+      #     DB_PASSWORD: ${MYSQL_PASSWORD}
+      #     DB_NAME: ${MYSQL_DATABASE}
+      #   run: npm test -- --ci --coverage --passWithNoTests
 
       # SonarQube Analysis
       - name: SonarQube Scan

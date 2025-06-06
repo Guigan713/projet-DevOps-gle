@@ -6,6 +6,22 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend--${ENVIRONMENT}:5000']
+    metrics_path: /metrics
+    scrape_interval: 5s
+
+  - job_name: 'frontend'
+    static_configs:
+      - targets: ['frontend--${ENVIRONMENT}:3000']
+    metrics_path: /metrics
+    scrape_interval: 5s
+
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['database--${ENVIRONMENT}:3306']
+
   - job_name: 'node_exporters'
     static_configs:
       - targets:
@@ -14,6 +30,65 @@ scrape_configs:
           - '<PRIVATE_IP_DB>:9100'
           - '<PRIVATE_IP_REVERSE_PROXY>:9100'
           - 'localhost:9100'
+
+  # scrape_configs:
+  # # Prometheus lui-même
+  # - job_name: 'prometheus'
+  #   static_configs:
+  #     - targets: ['localhost:9090']
+  #   labels:
+  #     service: 'monitoring'
+
+  # # Backend sur serveur dédié
+  # - job_name: 'backend'
+  #   static_configs:
+  #     - targets: ['backend-server.domain.com:5000']
+  #       # ou IP directe: ['10.0.1.100:5000']
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 5s
+  #   scrape_timeout: 10s
+  #   labels:
+  #     service: 'backend'
+  #     environment: '${ENVIRONMENT}'
+
+  # # Frontend sur serveur dédié
+  # - job_name: 'frontend'
+  #   static_configs:
+  #     - targets: ['frontend-server.domain.com:3000']
+  #       # ou IP directe: ['10.0.1.101:3000']
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 15s
+  #   labels:
+  #     service: 'frontend'
+
+  # # Base de données avec MySQL Exporter
+  # - job_name: 'mysql'
+  #   static_configs:
+  #     - targets: ['db-server.domain.com:9104']  # MySQL Exporter, pas MySQL direct
+  #       # ou IP: ['10.0.1.102:9104']
+  #   scrape_interval: 10s
+  #   labels:
+  #     service: 'database'
+
+  # # Node Exporter sur chaque serveur
+  # - job_name: 'node-exporter'
+  #   static_configs:
+  #     - targets: 
+  #         - 'frontend-server.domain.com:9100'
+  #         - 'backend-server.domain.com:9100'
+  #         - 'db-server.domain.com:9100'
+  #         - 'monitoring-server.domain.com:9100'
+  #         - 'proxy-server.domain.com:9100'
+  #   scrape_interval: 15s
+  #   labels:
+  #     service: 'infrastructure'
+
+  # # Reverse Proxy (Nginx/HAProxy)
+  # - job_name: 'reverse-proxy'
+  #   static_configs:
+  #     - targets: ['proxy-server.domain.com:9113']  # Nginx Exporter
+  #   labels:
+  #     service: 'reverse-proxy'
 
   # Scraper cAdvisor (pour surveiller les conteneurs Docker)
   # - job_name: 'cadvisor'

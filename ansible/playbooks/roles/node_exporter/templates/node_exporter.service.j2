@@ -1,0 +1,30 @@
+[Unit]
+Description=Prometheus Node Exporter
+Documentation=https://github.com/prometheus/node_exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ node_exporter_user }}
+Group={{ node_exporter_group }}
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart={{ node_exporter_binary_path }} \
+  --web.listen-address=0.0.0.0:{{ node_exporter_port }} \
+  --path.rootfs=/ \
+  --log.level={{ node_exporter_log_level }} \
+{% for collector in node_exporter_enabled_collectors %}
+  --collector.{{ collector }} \
+{% endfor %}
+{% for collector in node_exporter_disabled_collectors %}
+  --no-collector.{{ collector }} \
+{% endfor %}
+  --collector.textfile.directory={{ node_exporter_textfile_dir }}
+
+SyslogIdentifier=node_exporter
+Restart=always
+RestartSec=1
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target

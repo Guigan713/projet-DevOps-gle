@@ -1,9 +1,11 @@
 variable "project" {}
+variable "project_name" {}
 variable "region" {}
+variable "location" {}
 variable "zone" {}
 variable "vpc_cidr" {}
 variable "public_subnet_cidr" {}
 variable "private_subnet_cidr" {}
-variable "region" {}
 variable "image" {}
 variable "mon_ip" {}
+variable "domain_name" {}

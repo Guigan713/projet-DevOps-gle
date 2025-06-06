@@ -1,0 +1,58 @@
+name: Deploy projet DevOps
+
+on:
+  # workflow_run:
+  #   workflows: ["Test Workflow"]
+  #   types:
+  #     - completed
+  push:
+    branches:
+      # - main
+      - test
+
+jobs:
+  configure-servers:
+    name: Configure instances
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies & build frontend
+        run: |
+          cd frontend 
+          npm install
+          npm run build
+
+      - name: Install dependencies & build backend
+        run: |
+          cd backend 
+          npm install
+          npm run build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+  
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible boto3
+          ansible --version
+
+      - name: Configure SSH Key
+        run: |
+          echo "${{ secrets.AWS_PRIVATE_KEY }}" > gle-key.pem
+          chmod 600 gle-key.pem
+
+      - name: Run Ansible Playbook
+        run: |
+          cd ansible
+          ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml --private-key ../gle-key.pem
+
