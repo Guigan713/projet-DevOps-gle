@@ -16,7 +16,6 @@
 /terraform_gcp/.terraform
 /terraform_gcp/.terraform.lock.hcl
 
-compose.yml
 
 ansible/group_vars
 
