@@ -11,6 +11,20 @@ resource "google_compute_firewall" "reverse_proxy_ssh" {
   target_tags   = ["reverse-proxy"]
 }
 
+# SSH from reverse proxy to internal services (bastion functionality)
+resource "google_compute_firewall" "reverse_proxy_to_internal_ssh" {
+  name    = "reverse-proxy-to-internal-ssh"
+  network = var.vpc_name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_tags = ["reverse-proxy"]
+  target_tags = ["frontend", "backend", "database", "monitoring"]
+}
+
 # HTTP, HTTPS
 resource "google_compute_firewall" "reverse_proxy_ingress" {
   name    = "reverse-proxy-ingress"
@@ -26,57 +40,57 @@ resource "google_compute_firewall" "reverse_proxy_ingress" {
 }
 
 # Firewall rule for frontend (private subnet)
-resource "google_compute_firewall" "frontend_ssh" {
-  name    = "frontend-ssh"
-  network = var.vpc_name
+# resource "google_compute_firewall" "frontend_ssh" {
+#   name    = "frontend-ssh"
+#   network = var.vpc_name
 
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["22"]
+#   }
 
-  source_ranges = ["${var.mon_ip}/32"]
-  target_tags   = ["frontend"]
-}
+#   source_ranges = ["${var.mon_ip}/32"]
+#   target_tags   = ["frontend"]
+# }
 
-resource "google_compute_firewall" "backend_ssh" {
-  name    = "backend-ssh"
-  network = var.vpc_name
+# resource "google_compute_firewall" "backend_ssh" {
+#   name    = "backend-ssh"
+#   network = var.vpc_name
 
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["22"]
+#   }
 
-  source_ranges = ["${var.mon_ip}/32"]
-  target_tags   = ["backend"]
-}
+#   source_ranges = ["${var.mon_ip}/32"]
+#   target_tags   = ["backend"]
+# }
 
-resource "google_compute_firewall" "database_ssh" {
-  name    = "database-ssh"
-  network = var.vpc_name
+# resource "google_compute_firewall" "database_ssh" {
+#   name    = "database-ssh"
+#   network = var.vpc_name
 
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["22"]
+#   }
 
-  source_ranges = ["${var.mon_ip}/32"]
-  target_tags   = ["database"]
-}
+#   source_ranges = ["${var.mon_ip}/32"]
+#   target_tags   = ["database"]
+# }
 
-resource "google_compute_firewall" "monitoring_ssh" {
-  name    = "monitoring-ssh"
-  network = var.vpc_name
+# resource "google_compute_firewall" "monitoring_ssh" {
+#   name    = "monitoring-ssh"
+#   network = var.vpc_name
 
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["22"]
+#   }
 
-  source_ranges = ["${var.mon_ip}/32"]
-  target_tags   = ["monitoring"]
-}
+#   source_ranges = ["${var.mon_ip}/32"]
+#   target_tags   = ["monitoring"]
+# }
 
 resource "google_compute_firewall" "monitoring_services" {
   name    = "monitoring-services"

@@ -58,10 +58,41 @@ jobs:
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > gcp-ssh-key.pem
           chmod 600 gcp-ssh-key.pem
 
-      - name: Run Ansible Playbook
+      - name: Configure SSH for Bastion Access
+        run: |
+          mkdir -p ~/.ssh
+          cat > ~/.ssh/config << EOF
+          Host bastion
+            HostName 34.38.190.28
+            User ubuntu
+            IdentityFile $(pwd)/gcp-ssh-key.pem
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ControlMaster auto
+            ControlPath ~/.ssh/control-%r@%h:%p
+            ControlPersist 5m
+          
+          Host 10.0.2.*
+            User ubuntu
+            IdentityFile $(pwd)/gcp-ssh-key.pem
+            ProxyJump bastion
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Test Connectivity
         run: |
           cd ansible
-          ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml \ 
+          echo "Testing bastion connection..."
+          ansible reverse_proxy -m ping --private-key ../gcp-ssh-key.pem
+          
+          echo "Testing private network via bastion..."
+          ansible frontend,backend,database,monitoring -m ping --private-key ../gcp-ssh-key.pem
+
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/playbook.yml \ 
             --private-key ../gcp-ssh-key.pem \
             --vault-password-file <(echo $VAULT_PASSWORD) 
         env:
