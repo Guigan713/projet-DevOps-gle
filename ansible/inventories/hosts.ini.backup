@@ -12,3 +12,17 @@
 
 [monitoring]
 10.0.2.2 ansible_user=ubuntu
+
+
+# Group variables for bastion access
+[private_servers:children]
+frontend
+backend
+database
+monitoring
+
+[private_servers:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q ubuntu@34.38.190.28 -i {{ ansible_ssh_private_key_file }}"'
+
+[all:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
