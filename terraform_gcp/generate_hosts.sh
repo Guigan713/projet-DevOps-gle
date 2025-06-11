@@ -163,7 +163,7 @@ $(terraform output -raw database_ip) ansible_user=ubuntu
 $(terraform output -raw monitoring_ip) ansible_user=ubuntu
 
 [bastion]
-bastion ansible_host=$(terraform output -raw reverse_proxy_ip) ansible_user=buntu ansible_port=22
+bastion-server bastion ansible_host=$(terraform output -raw reverse_proxy_ip) ansible_user=ubuntu ansible_port=22
 
 [bastion:vars]
 ansible_ssh_private_key_file=../gcp-ssh-key.pem
