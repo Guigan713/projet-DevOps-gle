@@ -5,8 +5,9 @@
 	"main": "App.js",
 	"scripts": {
 		"test": "echo 'Tests désactivés' && exit 0",
+		"build": "echo 'No build step required for Node.js backend'",
 		"start": "node App.js",
-		"dev": "nodemon app.js"
+		"dev": "nodemon App.js"
 	},
 	"author": "",
 	"license": "ISC",
