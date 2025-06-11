@@ -161,6 +161,13 @@ $(terraform output -raw database_ip) ansible_user=ubuntu
 
 [monitoring]
 $(terraform output -raw monitoring_ip) ansible_user=ubuntu
+
+[bastion]
+bastion ansible_host=$(terraform output -raw reverse_proxy_ip) ansible_user=buntu ansible_port=22
+
+[bastion:vars]
+ansible_ssh_private_key_file=../gcp-ssh-key.pem
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 EOF
 
 echo "Fichier hosts.ini généré avec succès !"
