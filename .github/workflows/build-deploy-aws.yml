@@ -54,5 +54,9 @@ jobs:
       - name: Run Ansible Playbook
         run: |
           cd ansible
-          ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml --private-key ../gle-key.pem
+          ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml \
+            --private-key ../gle-key.pem \
+            --vault-password-file <(echo $VAULT_PASSWORD)
+        env:
+          VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }} 
 

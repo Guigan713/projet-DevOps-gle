@@ -10,3 +10,13 @@ node_env: "production"
 # Monitoring
 node_exporter_port: 9100
 enable_prometheus_metrics: true
+
+# Configuration de l'image
+frontend_image_name: "frontend-app"
+frontend_container_name: "frontend"
+
+# Configuration des ports
+frontend_port: 3000
+
+frontend_cleanup: false
+frontend_force_rebuild: false

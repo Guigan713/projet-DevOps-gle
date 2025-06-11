@@ -7,6 +7,20 @@
     state: present
     update_cache: true
 
+- name: Démarrer et activer Docker
+  become: true
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ajouter l'utilisateur ubuntu au groupe docker
+  become: true
+  ansible.builtin.user:
+    name: ubuntu
+    groups: docker
+    append: true
+
 - name: Create Database Directory
   file:
     path: /home/ubuntu/database
@@ -27,6 +41,23 @@
   command: docker-compose up -d
   args:
     chdir: /home/ubuntu/database
+
+- name: Wait for MySQL to be ready
+  wait_for:
+    port: 3306
+    host: localhost
+    timeout: 60
+
+- name: Create database user
+  mysql_user:
+    name: guillaume
+    password: "{{ vault_db_password }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: "%"
+    login_host: localhost
+    login_user: root
+    login_password: "{{ vault_db_root_password }}"
+  become: yes
 
 - name: Copier le script de backup MySQL
   template:

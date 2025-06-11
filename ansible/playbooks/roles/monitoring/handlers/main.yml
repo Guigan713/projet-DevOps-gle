@@ -1,0 +1,11 @@
+---
+- name: restart monitoring services
+  ansible.builtin.shell: docker-compose restart
+  args:
+    chdir: /home/ubuntu/monitoring
+
+- name: reload prometheus config
+  ansible.builtin.uri:
+    url: "http://{{ monitoring_private_ip }}:9090/-/reload"
+    method: POST
+  ignore_errors: true

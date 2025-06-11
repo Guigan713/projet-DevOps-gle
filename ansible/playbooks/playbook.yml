@@ -3,33 +3,53 @@
   become: true
   roles:
     - node_exporter
+  vars_files:
+    - host_vars/monitoring.yml
+    - group_vars/database.yml
+    - defaults/main.yml
 
 - name: Déployer le frontend
   hosts: frontend
   become: true
   roles:
     - frontend
+  vars_files:
+    - host_vars/frontend-vm.yml
+    - group_vars/all.yml
 
 - name: Déployer le backend
   hosts: backend
   become: true
   roles:
     - backend
+  vars_files:
+    - group_vars/vault.yml
+    - group_vars/all.yml
+    - host_vars/backend-vm.yml
 
 - name: Déployer la base de données
   hosts: database
   become: true
   roles:
     - database
+  vars_files:
+    - group_vars/*.yml
 
 - name: Déployer Prometheus & Grafana
   hosts: monitoring
   become: true
   roles:
     - monitoring
+  vars_files:
+    - host_vars/monitoring.yml
+    - group_vars/all.yml
+    - defaults/main.yml
 
 - name: Déployer le reverse proxy NGINX
   hosts: reverse_proxy
   become: true
   roles:
     - reverse-proxy
+  vars_files:
+    - group_vars/all.yml
+

@@ -6,6 +6,20 @@
       - docker-compose
     state: present
     update_cache: true
+
+- name: Démarrer et activer Docker
+  become: true
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ajouter l'utilisateur ubuntu au groupe docker
+  become: true
+  ansible.builtin.user:
+    name: ubuntu
+    groups: docker
+    append: true
     
 - name: Create Backend Directory
   ansible.builtin.file:
@@ -15,7 +29,7 @@
     group: ubuntu
     mode: '0755'
 
-- name: Copy Backend Files (Dockerfile + docker-compose)
+- name: Copier tous les fichiers backend (incluant Dockerfile)
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../backend/"
     dest: /home/ubuntu/backend/
@@ -23,7 +37,37 @@
     group: ubuntu
     mode: preserve
 
-- name: Exec Compose for Backend
-  ansible.builtin.command: docker-compose up -d
+- name: Templater le fichier docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /home/ubuntu/backend/docker-compose.yml
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  notify: restart backend
+
+- name: Créer le fichier .env pour les variables d'environnement
+  ansible.builtin.template:
+    src: .env.j2
+    dest: /home/ubuntu/backend/.env
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+  notify: restart backend
+
+- name: Arrêter les services backend existants
+  ansible.builtin.shell: docker compose down
+  args:
+    chdir: /home/ubuntu/backend
+  ignore_errors: true
+
+- name: Nettoyer les anciennes images si nécessaire
+  ansible.builtin.shell: docker image prune -f
+  when: backend_cleanup | default(false)
+
+- name: Construire et lancer les services
+  ansible.builtin.shell: |
+    docker compose build {{ '--no-cache' if backend_force_rebuild | default(false) else '' }}
+    docker compose up -d
   args:
     chdir: /home/ubuntu/backend

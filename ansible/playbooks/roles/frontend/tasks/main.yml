@@ -6,6 +6,20 @@
       - docker-compose
     state: present
     update_cache: true
+
+- name: Démarrer et activer Docker
+  become: true
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ajouter l'utilisateur ubuntu au groupe docker
+  become: true
+  ansible.builtin.user:
+    name: ubuntu
+    groups: docker
+    append: true
     
 - name: Create Frontend Directory
   file:
@@ -23,7 +37,28 @@
     group: ubuntu
     mode: preserve
 
-- name: Exec Docker
-  command: docker-compose up -d
+- name: Templater le fichier docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /home/ubuntu/frontend/docker-compose.yml
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  notify: restart frontend
+
+- name: Arrêter les services frontend existants
+  ansible.builtin.shell: docker compose down
+  args:
+    chdir: /home/ubuntu/frontend
+  ignore_errors: true
+
+- name: Nettoyer les anciennes images si nécessaire
+  ansible.builtin.shell: docker image prune -f
+  when: frontend_cleanup | default(false)
+
+- name: Construire et lancer les services
+  ansible.builtin.shell: |
+    docker compose build {{ '--no-cache' if frontend_force_rebuild | default(false) else '' }}
+    docker compose up -d
   args:
     chdir: /home/ubuntu/frontend

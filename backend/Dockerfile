@@ -1,23 +1,47 @@
-# Utilisation d'une image Node.js pour le backend
-FROM node:23-slim AS base
+# Définit l'image de base Node.js version 23 (légère) et nomme ce stage "development"
+FROM node:23-slim AS development
 
-# Définition du répertoire de travail
+# Définit le répertoire de travail à /app dans le conteneur
 WORKDIR /app
 
-# Copier les fichiers du projet
+# Copie les fichiers package.json et package-lock.json dans le conteneur
 COPY package*.json ./
 
+# Installe toutes les dépendances (développement + production)
 RUN npm install
 
-# Copier le reste du projet
+# Copie tous les fichiers du projet dans le conteneur
 COPY . .
 
-# Copier les variables d'environnement
+# Copie spécifiquement le fichier d'environnement .env
 COPY .env .env
 
-# Exposer le port de l'API
+# Expose le port 5000 pour l'accès au serveur backend
 EXPOSE 5000
 
-# Démarrer l'application
-# CMD ["npm", "start"]
-CMD ["node", "server.js"]
+# Commande par défaut : lance le serveur en mode développement
+CMD ["npm", "run", "dev"]
+
+# Crée un nouveau stage "production" avec une image Node.js légère
+FROM node:23-slim AS production
+
+# Définit le répertoire de travail à /app pour ce stage
+WORKDIR /app
+
+# Copie les fichiers package.json et package-lock.json
+COPY package*.json ./
+
+# Installation optimisée des dépendances de production uniquement
+RUN npm ci --only=production
+
+# Copie tous les fichiers du projet dans le stage production
+COPY . .
+
+# Expose le port 5000 pour l'accès à l'API en production
+EXPOSE 5000
+
+# Commande par défaut : lance l'application en mode production
+CMD ["npm", "start"]
+
+# Alternative commentée : lancement direct du fichier App.js avec Node
+# CMD ["node", "App.js"]

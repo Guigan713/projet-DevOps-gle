@@ -5,13 +5,16 @@ services:
     image: frontend:${ENVIRONMENT}
     restart: unless-stopped
     build:
-      context: ./frontend
+      context: ${DIR_FRONTEND}
       dockerfile: Dockerfile
       target: ${ENVIRONMENT}
     ports:
-      - "80:3000"
-    # environment:
-    #   REACT_APP_API_URL: http://<PRIVATE_IP_BACKEND>:5000
+      # - "3000:80"
+       - "3000:3000"  # For development (node serves on port 3000)
+    environment:
+      # REACT_APP_API_URL: http://backend--${ENVIRONMENT}:5000
+      REACT_APP_API_URL: http://localhost:5000
+
     networks: 
       - app_network
 
@@ -31,11 +34,18 @@ services:
     image: backend:${ENVIRONMENT}
     restart: unless-stopped
     build: 
-      context: ./backend
+      context: ${DIR_BACKEND}
       dockerfile: Dockerfile
       target: ${ENVIRONMENT}
     ports:
       - "5000:5000"
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+      - DATABASE_HOST=database
+      - DATABASE_USER=${DB_USER}
+      - DATABASE_PASSWORD=${DB_PASSWORD}
+      - DATABASE_NAME=${DB_NAME}
+      - PORT=${PORT}
     networks:
       - app_network
     healthcheck:
@@ -49,8 +59,6 @@ services:
       
   database:
     image: mysql:8.0
-    expose:
-      - "3306" # seulement accessible aux autres containers
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
@@ -59,6 +67,8 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3307:3306"
     networks:
       - app_network
     healthcheck:
@@ -72,7 +82,7 @@ services:
     container_name: prometheus--${ENVIRONMENT}
     restart: always
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'

@@ -1,0 +1,10 @@
+# Targets pour node_exporter
+node_exporter_targets:
+  - "{{ frontend_private_ip }}:9100"
+  - "{{ backend_private_ip }}:9100"
+  - "{{ database_private_ip }}:9100"
+  - "{{ monitoring_private_ip }}:9100"
+  - "projet-devops-gle.fr:9100"
+
+# Reverse proxy
+reverse_proxy_target: "projet-devops-gle.fr:9113"

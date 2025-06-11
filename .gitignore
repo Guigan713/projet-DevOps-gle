@@ -2,6 +2,8 @@
 /aws
 .env
 
+/database/.env
+
 /terraform_aws/credentials
 /terraform_aws/terraform.tfvars
 /terraform_aws/terraform.tfstate
@@ -18,6 +20,8 @@
 
 
 ansible/group_vars
+.vault_pass
+.ansible_vault_password
 
 .vscode
 

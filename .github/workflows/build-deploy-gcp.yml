@@ -7,7 +7,7 @@ on:
   #     - completed
   push:
     branches:
-      - test
+      - main
 
 jobs:
   configure-servers:
@@ -61,5 +61,9 @@ jobs:
       - name: Run Ansible Playbook
         run: |
           cd ansible
-          ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml --private-key ../terraform_gcp/credentials/gcp-ssh-key.pem
+          ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml \ 
+            --private-key ../terraform_gcp/credentials/gcp-ssh-key.pem \
+            --vault-password-file <(echo $VAULT_PASSWORD) 
+        env:
+          VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}  
 
