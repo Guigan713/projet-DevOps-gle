@@ -62,7 +62,7 @@ jobs:
         run: |
           cd ansible
           ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml \ 
-            --private-key ../terraform_gcp/credentials/gcp-ssh-key.pem \
+            --private-key ../gcp-ssh-key.pem \
             --vault-password-file <(echo $VAULT_PASSWORD) 
         env:
           VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}  
