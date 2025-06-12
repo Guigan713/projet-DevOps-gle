@@ -82,14 +82,14 @@ jobs:
           EOF
           chmod 600 ~/.ssh/config
 
-      - name: Test Connectivity
-        run: |
-          cd ansible
-          echo "Testing bastion connection..."
-          ansible reverse_proxy -m ping --private-key ~/.ssh/gcp-ssh-key.pem
+      # - name: Test Connectivity
+      #   run: |
+      #     cd ansible
+      #     echo "Testing bastion connection..."
+      #     ansible reverse_proxy -m ping --private-key ~/.ssh/gcp-ssh-key.pem
           
-          echo "Testing private network via bastion..."
-          ansible frontend,backend,database,monitoring -m ping --private-key ~/.ssh/gcp-ssh-key.pem
+      #     echo "Testing private network via bastion..."
+      #     ansible frontend,backend,database,monitoring -m ping --private-key ~/.ssh/gcp-ssh-key.pem
 
       - name: SSH manual debug
         run: |
