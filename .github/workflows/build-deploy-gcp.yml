@@ -91,6 +91,10 @@ jobs:
           echo "Testing private network via bastion..."
           ansible frontend,backend,database,monitoring -m ping --private-key ~/.ssh/gcp-ssh-key.pem
 
+      - name: SSH manual debug
+        run: |
+          ssh -vvv -i ~/.ssh/gcp-ssh-key.pem -o StrictHostKeyChecking=no ubuntu@34.38.190.28 hostname || true
+
       - name: Run Ansible Playbook
         run: |
           ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/playbook.yml \
