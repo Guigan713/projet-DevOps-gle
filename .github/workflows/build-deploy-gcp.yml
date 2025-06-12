@@ -55,6 +55,7 @@ jobs:
 
       - name: Configure SSH Key for GCP
         run: |
+          mkdir -p ~/.ssh
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp-ssh-key.pem
           chmod 600 ~/.ssh/gcp-ssh-key.pem
 
