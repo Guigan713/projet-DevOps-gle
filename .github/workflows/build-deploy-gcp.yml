@@ -58,7 +58,6 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp-ssh-key
           chmod 600 ~/.ssh/gcp-ssh-key
-          ssh-keygen -p -N "" -f ~/.ssh/gcp-ssh-key || true
 
       - name: Configure SSH for Bastion Access
         run: |
@@ -101,7 +100,8 @@ jobs:
           ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/playbook.yml \
             --private-key ~/.ssh/gcp-ssh-key \
             --vault-password-file <(echo $VAULT_PASSWORD) \
-            -u guillaume
+            -u guillaume \
+            -v
         env:
-          VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}  
+          VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
 
