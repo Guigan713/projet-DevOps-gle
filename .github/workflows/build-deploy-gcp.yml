@@ -93,7 +93,7 @@ jobs:
 
       - name: SSH manual debug
         run: |
-          ssh -vvv -i ~/.ssh/gcp-ssh-key.pem -o StrictHostKeyChecking=no ubuntu@34.38.190.28 hostname || true
+          ssh -vvv -i ~/.ssh/gcp-ssh-key.pem -o StrictHostKeyChecking=no guillaume@34.38.190.28 hostname || true
 
       - name: Run Ansible Playbook
         run: |

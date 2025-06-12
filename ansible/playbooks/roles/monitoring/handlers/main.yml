@@ -2,7 +2,7 @@
 - name: restart monitoring services
   ansible.builtin.shell: docker-compose restart
   args:
-    chdir: /home/ubuntu/monitoring
+    chdir: /home/guillaume/monitoring
 
 - name: reload prometheus config
   ansible.builtin.uri:

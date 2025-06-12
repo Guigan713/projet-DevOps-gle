@@ -14,41 +14,41 @@
     state: started
     enabled: true
 
-- name: Ajouter l'utilisateur ubuntu au groupe docker
+- name: Ajouter l'utilisateur guillaume au groupe docker
   become: true
   ansible.builtin.user:
-    name: ubuntu
+    name: guillaume
     groups: docker
     append: true
 
 - name: Créer le dossier de monitoring
   ansible.builtin.file:
-    path: /home/ubuntu/monitoring
+    path: /home/guillaume/monitoring
     state: directory
-    owner: ubuntu
-    group: ubuntu
+    owner: guillaume
+    group: guillaume
     mode: '0755'
 
 - name: copier le fichier prometheus.yml avec les variables
   ansible.builtin.template:
     src: prometheus.yml.j2
-    dest: /home/ubuntu/monitoring/prometheus.yml
-    owner: ubuntu
-    group: ubuntu
+    dest: /home/guillaume/monitoring/prometheus.yml
+    owner: guillaume
+    group: guillaume
     mode: '0644'
 
 - name: Copier le fichier docker-compose.yml
   ansible.builtin.copy:
     src: docker-compose.yml
-    dest: /home/ubuntu/monitoring/docker-compose.yml
-    owner: ubuntu
-    group: ubuntu
+    dest: /home/guillaume/monitoring/docker-compose.yml
+    owner: guillaume
+    group: guillaume
     mode: '0644'
 
 - name: Arrêter les services existants (si ils existent)
   ansible.builtin.shell: docker compose down
   args:
-    chdir: /home/ubuntu/monitoring
+    chdir: /home/guillaume/monitoring
   ignore_errors: true
 
 - name: Nettoyer les anciennes images si nécessaire
@@ -58,11 +58,11 @@
 - name: Lancer Docker Compose pour Prometheus et Grafana
   ansible.builtin.command: docker compose up -d
   args:
-    chdir: /home/ubuntu/monitoring
+    chdir: /home/guillaume/monitoring
   register: docker_compose_result
 
 - name: Vérifier l'état des conteneurs
   ansible.builtin.shell: docker compose ps
   args:
-    chdir: /home/ubuntu/monitoring
+    chdir: /home/guillaume/monitoring
   register: containers_status

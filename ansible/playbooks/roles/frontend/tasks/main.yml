@@ -14,42 +14,43 @@
     state: started
     enabled: true
 
-- name: Ajouter l'utilisateur ubuntu au groupe docker
+- name: Ajouter l'utilisateur guillaume au groupe docker
   become: true
   ansible.builtin.user:
-    name: ubuntu
+    name: guillaume
     groups: docker
     append: true
-    
+
 - name: Create Frontend Directory
   file:
-    path: /home/ubuntu/frontend
+    path: /home/guillaume/frontend
     state: directory
-    owner: ubuntu
-    group: ubuntu
+    owner: guillaume
+    group: guillaume
     mode: '0755'
 
 - name: Copy Frontend Files
   copy:
     src: "{{ playbook_dir }}/../../frontend/"
-    dest: /home/ubuntu/frontend/
-    owner: ubuntu
-    group: ubuntu
+    dest: /home/guillaume/frontend/
+    owner: guillaume
+    group: guillaume
     mode: preserve
 
 - name: Templater le fichier docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2
-    dest: /home/ubuntu/frontend/docker-compose.yml
-    owner: ubuntu
-    group: ubuntu
+    dest: /home/guillaume/frontend/docker-compose.yml
+    owner: guillaume
+    group: guillaume
     mode: '0644'
   notify: restart frontend
+
 
 - name: Arrêter les services frontend existants
   ansible.builtin.shell: docker compose down
   args:
-    chdir: /home/ubuntu/frontend
+    chdir: /home/guillaume/frontend
   ignore_errors: true
 
 - name: Nettoyer les anciennes images si nécessaire
@@ -61,4 +62,4 @@
     docker compose build {{ '--no-cache' if frontend_force_rebuild | default(false) else '' }}
     docker compose up -d
   args:
-    chdir: /home/ubuntu/frontend
+    chdir: /home/guillaume/frontend

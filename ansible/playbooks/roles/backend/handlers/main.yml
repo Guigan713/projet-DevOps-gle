@@ -2,7 +2,7 @@
 - name: restart backend
   ansible.builtin.shell: docker compose restart
   args:
-    chdir: /home/ubuntu/backend
+    chdir: /home/guillaume/backend
 
 # - name: rebuild backend
 #   ansible.builtin.shell: docker compose down && docker compose build --no-cache && docker compose up -d
