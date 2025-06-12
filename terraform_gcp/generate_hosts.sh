@@ -170,7 +170,7 @@ ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/gcp-ssh-key.pem -W %h:%p
 [reverse_proxy:vars]
 ansible_user=guillaume
 ansible_port=22
-ansible_ssh_common_args=''
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 EOF
 
 echo "Fichier hosts.ini généré avec succès !"

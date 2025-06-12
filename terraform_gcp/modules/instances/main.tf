@@ -14,6 +14,10 @@ resource "google_compute_instance" "frontend" {
         subnetwork = var.private_subnet_id
     }
 
+    metadata = {
+      ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pem.pub")}"
+    }
+
     tags = ["frontend"]
 }
 
@@ -43,7 +47,10 @@ resource "google_compute_instance" "reverse_proxy" {
       nat_ip = google_compute_address.reverse_proxy_ip.address
     }
   }
-
+  
+  metadata = {
+      ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pem.pub")}"
+    }
 
   tags = ["reverse-proxy"]
 }
@@ -63,6 +70,10 @@ resource "google_compute_instance" "backend" {
   network_interface {
     network    = var.vpc_id
     subnetwork = var.private_subnet_id
+  }
+
+  metadata = {
+    ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pem.pub")}"
   }
 
   tags = ["backend"]
@@ -85,6 +96,10 @@ resource "google_compute_instance" "database" {
     subnetwork = var.private_subnet_id
   }
 
+  metadata = {
+    ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pem.pub")}"
+  }
+
   tags = ["database"]
 }
 
@@ -104,25 +119,9 @@ resource "google_compute_instance" "monitoring" {
     subnetwork = var.private_subnet_id
   }
 
+  metadata = {
+    ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pem.pub")}"
+  }
+
   tags = ["monitoring"]
 }
-
-# resource "null_resource" "generate_ansible_inventory" {
-#     triggers = {
-#       # Se déclenche à chaque terraform apply
-#       always_run = timestamp()
-#     }
-
-#     provisioner "local-exec" {
-#       command = "./generate_hosts.sh"
-#       working_dir = path.module
-#     }
-
-#     depends_on = [
-#       google_compute_instance.frontend,
-#       google_compute_instance.reverse_proxy,
-#       google_compute_instance.backend,
-#       google_compute_instance.database,
-#       google_compute_instance.monitoring
-#     ]
-# }
