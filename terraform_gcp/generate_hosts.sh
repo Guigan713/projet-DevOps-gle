@@ -148,28 +148,26 @@ echo "Génération du fichier hosts.ini..."
 # Génération du fichier hosts.ini
 cat > ../ansible/inventories/hosts.ini <<EOF
 [frontend]
-$(terraform output -raw frontend_ip) ansible_user=guillaume
+frontend ansible_host=$(terraform output -raw frontend_ip) ansible_user=guillaume
 
 [reverse_proxy]
-$(terraform output -raw reverse_proxy_ip) ansible_user=guillaume
+reverse_proxy ansible_host=$(terraform output -raw reverse_proxy_ip) ansible_user=guillaume
 
 [backend]
-$(terraform output -raw backend_ip) ansible_user=guillaume
+backend ansible_host=$(terraform output -raw backend_ip) ansible_user=guillaume
 
 [database]
-$(terraform output -raw database_ip) ansible_user=guillaume
+database ansible_host=$(terraform output -raw database_ip) ansible_user=guillaume
 
 [monitoring]
-$(terraform output -raw monitoring_ip) ansible_user=guillaume
+monitoring ansible_host=$(terraform output -raw monitoring_ip) ansible_user=guillaume
 
 [all:vars]
+ansible_user=guillaume
 ansible_ssh_private_key_file=~/.ssh/gcp-ssh-key.pem
 ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/gcp-ssh-key.pem -W %h:%p -q guillaume@$(terraform output -raw reverse_proxy_ip)"'
 
-[bastion]
-bastion-server ansible_host=$(terraform output -raw reverse_proxy_ip) 
-
-[bastion:vars]
+[reverse_proxy:vars]
 ansible_user=guillaume
 ansible_port=22
 ansible_ssh_common_args=''
