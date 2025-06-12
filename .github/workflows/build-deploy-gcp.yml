@@ -56,8 +56,8 @@ jobs:
       - name: Configure SSH Key for GCP
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp-ssh-key.pem
-          chmod 600 ~/.ssh/gcp-ssh-key.pem
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp-ssh-key
+          chmod 600 ~/.ssh/gcp-ssh-key
 
       - name: Configure SSH for Bastion Access
         run: |
@@ -66,7 +66,7 @@ jobs:
           Host bastion
             HostName 34.38.190.28
             User ubuntu
-            IdentityFile ~/.ssh/gcp-ssh-key.pem
+            IdentityFile ~/.ssh/gcp-ssh-key
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
             ControlMaster auto
@@ -75,7 +75,7 @@ jobs:
           
           Host 10.0.2.*
             User ubuntu
-            IdentityFile ~/.ssh/gcp-ssh-key.pem
+            IdentityFile ~/.ssh/gcp-ssh-key
             ProxyJump bastion
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
@@ -86,20 +86,21 @@ jobs:
       #   run: |
       #     cd ansible
       #     echo "Testing bastion connection..."
-      #     ansible reverse_proxy -m ping --private-key ~/.ssh/gcp-ssh-key.pem
+      #     ansible reverse_proxy -m ping --private-key ~/.ssh/gcp-ssh-key
           
       #     echo "Testing private network via bastion..."
-      #     ansible frontend,backend,database,monitoring -m ping --private-key ~/.ssh/gcp-ssh-key.pem
+      #     ansible frontend,backend,database,monitoring -m ping --private-key ~/.ssh/gcp-ssh-key
 
       - name: SSH manual debug
         run: |
-          ssh -vvv -i ~/.ssh/gcp-ssh-key.pem -o StrictHostKeyChecking=no guillaume@34.38.190.28 hostname || true
+          ssh -vvv -i ~/.ssh/gcp-ssh-key -o StrictHostKeyChecking=no guillaume@34.38.190.28 hostname || true
 
       - name: Run Ansible Playbook
         run: |
           ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/playbook.yml \
-            --private-key ~/.ssh/gcp-ssh-key.pem \
-            --vault-password-file <(echo $VAULT_PASSWORD) 
+            --private-key ~/.ssh/gcp-ssh-key \
+            --vault-password-file <(echo $VAULT_PASSWORD) \
+            -u guillaume
         env:
           VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}  
 
