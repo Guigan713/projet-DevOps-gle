@@ -28,3 +28,5 @@ node_exporter_disabled_collectors:
   - mdadm
   - zfs
   - powersupplyclass
+
+node_exporter_textfile_dir: /var/lib/node_exporter/textfile_collector

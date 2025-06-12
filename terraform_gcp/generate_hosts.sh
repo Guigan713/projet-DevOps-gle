@@ -164,7 +164,7 @@ $(terraform output -raw monitoring_ip) ansible_user=guillaume
 
 [all:vars]
 ansible_ssh_private_key_file=~/.ssh/gcp-ssh-key.pem
-ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q guillaume@$(terraform output -raw reverse_proxy_ip)"'
+ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/gcp-ssh-key.pem -W %h:%p -q guillaume@$(terraform output -raw reverse_proxy_ip)"'
 
 [bastion]
 bastion-server ansible_host=$(terraform output -raw reverse_proxy_ip) 
