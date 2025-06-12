@@ -1,3 +1,40 @@
+- name: Wait for connection
+  wait_for_connection:
+    timeout: 60
+
+- name: Install SSH
+  apt:
+    name:
+      - openssh-server
+      - sudo
+    state: present
+    update_cache: yes
+
+- name: Ensure SSH user can sudo
+  lineinfile:
+    path: /etc/sudoers.d/{{ ssh_user }}
+    line: "{{ ssh_user }} ALL=(ALL) NOPASSWD:ALL"
+    create: yes
+    mode: '0440'
+
+- name: Configure SSH for stability
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: yes
+  loop:
+    - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+    - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+    - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval 60' }
+  notify: restart ssh
+
+- name: Start SSH service
+  systemd:
+    name: ssh
+    state: started
+    enabled: yes
+
 - name: Install Nginx + Certbot
   apt:
     name:
@@ -63,3 +100,22 @@
     minute: "0"
     hour: "12"
     job: "/usr/bin/certbot renew --quiet"
+
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+
+- name: Allow SSH and HTTP
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+  loop:
+    - '22'
+    - '80'
+    - '443'
+
+- name: Enable firewall
+  community.general.ufw:
+    state: enabled
+    policy: deny
