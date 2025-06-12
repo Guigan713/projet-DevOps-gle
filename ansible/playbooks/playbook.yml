@@ -8,6 +8,29 @@
     - group_vars/database.yml
     - defaults/main.yml
 
+- name: Ensure user guillaume exists and SSH key is deployed
+  hosts: all
+  become: true
+  tasks:
+    - name: Créer l'utilisateur guillaume
+      user:
+        name: guillaume
+        state: present
+
+    - name: Créer le dossier .ssh
+      file:
+        path: /home/guillaume/.ssh
+        state: directory
+        owner: guillaume
+        group: guillaume
+        mode: 0700
+
+    - name: Déposer la clé publique
+      authorized_key:
+        user: guillaume
+        key: "{{ lookup('file', '~/.ssh/gcp-ssh-key.pub') }}"
+        state: present
+
 - name: Déployer le frontend
   hosts: frontend
   become: true

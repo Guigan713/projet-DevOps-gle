@@ -148,19 +148,19 @@ echo "Génération du fichier hosts.ini..."
 # Génération du fichier hosts.ini
 cat > ../ansible/inventories/hosts.ini <<EOF
 [frontend]
-frontend ansible_host=$(terraform output -raw frontend_ip) ansible_user=guillaume
+frontend1 ansible_host=$(terraform output -raw frontend_ip) ansible_user=guillaume
 
 [reverse_proxy]
-reverse_proxy ansible_host=$(terraform output -raw reverse_proxy_ip) ansible_user=guillaume
+reverse_proxy1 ansible_host=$(terraform output -raw reverse_proxy_ip) ansible_user=guillaume
 
 [backend]
-backend ansible_host=$(terraform output -raw backend_ip) ansible_user=guillaume
+backend1 ansible_host=$(terraform output -raw backend_ip) ansible_user=guillaume
 
 [database]
-database ansible_host=$(terraform output -raw database_ip) ansible_user=guillaume
+database1 ansible_host=$(terraform output -raw database_ip) ansible_user=guillaume
 
 [monitoring]
-monitoring ansible_host=$(terraform output -raw monitoring_ip) ansible_user=guillaume
+monitoring1 ansible_host=$(terraform output -raw monitoring_ip) ansible_user=guillaume
 
 [all:vars]
 ansible_user=guillaume
