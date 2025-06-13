@@ -28,7 +28,7 @@
     - name: Déposer la clé publique
       authorized_key:
         user: guillaume
-        key: "{{ lookup('file', 'files/gcp-ssh-key.pub') }}"
+        key: "{{ lookup('env', 'GCP_SA_KEY') }}"
         state: present
 
 - name: Déployer le frontend
