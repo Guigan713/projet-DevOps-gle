@@ -164,8 +164,8 @@ monitoring1 ansible_host=$(terraform output -raw monitoring_ip) ansible_user=gui
 
 [all:vars]
 ansible_user=guillaume
-ansible_ssh_private_key_file=~/.ssh/gcp-ssh-key.pem
-ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/gcp-ssh-key.pem -W %h:%p -q guillaume@$(terraform output -raw reverse_proxy_ip)"'
+ansible_ssh_private_key_file=~/.ssh/gcp-ssh-key
+ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/gcp-ssh-key -W %h:%p -q guillaume@$(terraform output -raw reverse_proxy_ip)"'
 
 [reverse_proxy:vars]
 ansible_user=guillaume

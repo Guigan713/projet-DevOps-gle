@@ -15,10 +15,10 @@ monitoring1 ansible_host=10.0.2.2 ansible_user=guillaume
 
 [all:vars]
 ansible_user=guillaume
-ansible_ssh_private_key_file=~/.ssh/gcp-ssh-key.pem
-ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/gcp-ssh-key.pem -W %h:%p -q guillaume@34.38.190.28"'
+ansible_ssh_private_key_file=~/.ssh/gcp-ssh-key
+ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/gcp-ssh-key-W %h:%p -q guillaume@34.38.190.28"'
 
 [reverse_proxy:vars]
 ansible_user=guillaume
 ansible_port=22
-ansible_ssh_common_args=''
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
