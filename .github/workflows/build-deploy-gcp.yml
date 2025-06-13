@@ -101,7 +101,7 @@ jobs:
             --private-key ~/.ssh/gcp-ssh-key \
             --vault-password-file <(echo $VAULT_PASSWORD) \
             -u guillaume \
-            -vvv
+            -v
         env:
           VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
           GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
