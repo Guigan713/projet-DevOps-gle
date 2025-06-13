@@ -104,5 +104,5 @@ jobs:
             -v
         env:
           VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
 
