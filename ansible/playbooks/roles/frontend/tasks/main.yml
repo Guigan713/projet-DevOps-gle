@@ -29,28 +29,38 @@
     group: guillaume
     mode: '0755'
 
-- name: Diagnostic - Find frontend
-  shell: |
-    echo "=== Current working directory ==="
-    pwd
-    echo "=== Environment variables ==="
-    env | grep -E "(GITHUB|RUNNER|HOME)" | sort
-    echo "=== Looking for frontend directories ==="
-    find /home/runner/work -name "frontend" -type d 2>/dev/null | head -5
-  delegate_to: localhost
-  register: diagnostic
+- name: Set frontend source path
+  set_fact:
+    frontend_src_path: "{{ playbook_dir }}/../../../frontend"
 
-- name: Show diagnostic
+- name: Verify frontend source exists
+  stat:
+    path: "{{ frontend_src_path }}"
+  register: frontend_check
+  delegate_to: localhost
+
+- name: Debug frontend path
   debug:
-    var: diagnostic.stdout_lines
+    msg: 
+      - "Frontend source path: {{ frontend_src_path }}"
+      - "Path exists: {{ frontend_check.stat.exists }}"
+      - "Current role path: {{ role_path }}"
 
 - name: Copy Frontend Files
   copy:
-    src: "{{ playbook_dir }}/../frontend/"
+    src: "{{ playbook_dir }}/../../../frontend/"
     dest: /home/guillaume/frontend/
     owner: guillaume
     group: guillaume
     mode: 0644
+  become: yes
+  register: copy_result
+  when: frontend_check.stat.exists
+
+- name: Fail if frontend source not found
+  fail:
+    msg: "Frontend source directory not found at {{ frontend_src_path }}"
+  when: not frontend_check.stat.exists
 
 - name: Templater le fichier docker-compose.yml
   ansible.builtin.template:
