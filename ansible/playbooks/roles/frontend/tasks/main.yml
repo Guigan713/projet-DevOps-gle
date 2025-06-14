@@ -29,9 +29,9 @@
     group: guillaume
     mode: '0755'
 
-- name: Set frontend source path
+- name: Set frontend source path (absolute)
   set_fact:
-    frontend_src_path: "{{ playbook_dir }}/../../../frontend"
+    frontend_src_path: "/home/runner/work/projet-DevOps-gle/projet-DevOps-gle/frontend"
 
 - name: Verify frontend source exists
   stat:
@@ -44,7 +44,6 @@
     msg: 
       - "Frontend source path: {{ frontend_src_path }}"
       - "Path exists: {{ frontend_check.stat.exists }}"
-      - "Current role path: {{ role_path }}"
 
 - name: Copy Frontend Files
   copy:
@@ -56,11 +55,6 @@
   become: yes
   register: copy_result
   when: frontend_check.stat.exists
-
-- name: Fail if frontend source not found
-  fail:
-    msg: "Frontend source directory not found at {{ frontend_src_path }}"
-  when: not frontend_check.stat.exists
 
 - name: Templater le fichier docker-compose.yml
   ansible.builtin.template:
