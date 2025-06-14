@@ -31,7 +31,7 @@
 
 - name: Copier tous les fichiers backend (incluant Dockerfile)
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../../backend/"
+    src: "{{ playbook_dir }}/../backend/"
     dest: /home/guillaume/backend/
     owner: guillaume
     group: guillaume

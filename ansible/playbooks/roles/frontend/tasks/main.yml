@@ -31,19 +31,11 @@
 
 - name: Copy Frontend Files
   copy:
-    src: "{{ playbook_dir }}/../../frontend/"
+    src: "{{ playbook_dir }}/../frontend/"
     dest: /home/guillaume/frontend/
     owner: guillaume
     group: guillaume
     mode: 0644
-  with_fileglob:
-    - "files/frontend/*"
-  register: copy_result
-
-- name: Debug copy result
-  debug:
-    var: copy_result
-    verbosity: 1
 
 - name: Templater le fichier docker-compose.yml
   ansible.builtin.template:

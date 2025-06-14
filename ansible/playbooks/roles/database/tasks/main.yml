@@ -31,7 +31,7 @@
 
 - name: Copy MySQL Services Files
   copy:
-    src: "{{ playbook_dir }}/../../database/"
+    src: "{{ playbook_dir }}/../database/"
     dest: /home/guillaume/database/
     owner: guillaume
     group: guillaume
