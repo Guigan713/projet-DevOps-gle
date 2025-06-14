@@ -29,6 +29,21 @@
     group: guillaume
     mode: '0755'
 
+- name: Diagnostic - Find frontend
+  shell: |
+    echo "=== Current working directory ==="
+    pwd
+    echo "=== Environment variables ==="
+    env | grep -E "(GITHUB|RUNNER|HOME)" | sort
+    echo "=== Looking for frontend directories ==="
+    find /home/runner/work -name "frontend" -type d 2>/dev/null | head -5
+  delegate_to: localhost
+  register: diagnostic
+
+- name: Show diagnostic
+  debug:
+    var: diagnostic.stdout_lines
+
 - name: Copy Frontend Files
   copy:
     src: "{{ playbook_dir }}/../frontend/"
