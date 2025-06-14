@@ -27,34 +27,19 @@
     state: directory
     owner: guillaume
     group: guillaume
-    mode: '0755'
-
-- name: Set frontend source path (absolute)
-  set_fact:
-    frontend_src_path: "/home/runner/work/projet-DevOps-gle/projet-DevOps-gle/frontend"
-
-- name: Verify frontend source exists
-  stat:
-    path: "{{ frontend_src_path }}"
-  register: frontend_check
-  delegate_to: localhost
-
-- name: Debug frontend path
-  debug:
-    msg: 
-      - "Frontend source path: {{ frontend_src_path }}"
-      - "Path exists: {{ frontend_check.stat.exists }}"
+    mode: u=rwX,g=rX,o=rX
+    recurse: yes
+  become: yes
 
 - name: Copy Frontend Files
   copy:
-    src: "{{ playbook_dir }}/../../../frontend/"
+    src: "/home/runner/work/projet-DevOps-gle/projet-DevOps-gle/frontend/"
     dest: /home/guillaume/frontend/
     owner: guillaume
     group: guillaume
     mode: 0644
   become: yes
   register: copy_result
-  when: frontend_check.stat.exists
 
 - name: Templater le fichier docker-compose.yml
   ansible.builtin.template:
