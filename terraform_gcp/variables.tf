@@ -9,3 +9,4 @@ variable "private_subnet_cidr" {}
 variable "image" {}
 variable "mon_ip" {}
 variable "domain_name" {}
+variable "ssh_public_key_path" {}

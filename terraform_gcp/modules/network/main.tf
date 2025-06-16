@@ -1,5 +1,6 @@
 resource "google_compute_network" "main" {
     name = "main-vpc"
+    ip_cidr_range = 
     auto_create_subnetworks = false
     project = var.project
 }

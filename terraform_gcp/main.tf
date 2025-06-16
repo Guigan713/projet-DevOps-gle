@@ -23,6 +23,7 @@ module "instances" {
     public_subnet_id = module.network.public_subnet_id
     vpc_id = module.network.vpc_id
     region = var.region
+    ssh_public_key_path = var.ssh_public_key_path
 }
 
 module "network" {

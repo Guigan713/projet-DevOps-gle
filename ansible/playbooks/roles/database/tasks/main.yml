@@ -1,26 +1,3 @@
-- name: Installer Docker et Docker Compose
-  become: true
-  ansible.builtin.apt:
-    name:
-      - docker.io
-      - docker-compose
-    state: present
-    update_cache: true
-
-- name: Démarrer et activer Docker
-  become: true
-  ansible.builtin.systemd:
-    name: docker
-    state: started
-    enabled: true
-
-- name: Ajouter l'utilisateur guillaume au groupe docker
-  become: true
-  ansible.builtin.user:
-    name: guillaume
-    groups: docker
-    append: true
-
 - name: Create Database Directory
   file:
     path: /home/guillaume/database
@@ -31,14 +8,14 @@
 
 - name: Copy MySQL Services Files
   copy:
-    src: "{{ databae_source_dir }}"
+    src: "{{ project_root }}/database/"
     dest: /home/guillaume/database/
     owner: guillaume
     group: guillaume
     mode: preserve
 
 - name: Exec Compose for Database
-  command: docker-compose up -d
+  command: docker compose up -d
   args:
     chdir: /home/guillaume/database
 

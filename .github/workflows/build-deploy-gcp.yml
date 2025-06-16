@@ -7,7 +7,7 @@ on:
   #     - completed
   push:
     branches:
-      - main
+      - deploy
 
 jobs:
   configure-servers:
@@ -93,12 +93,13 @@ jobs:
 
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/playbook.yml \
+          ansible-playbook -i ansible/inventories/hosts.yml ansible/playbooks/playbook.yml \
             --private-key ~/.ssh/gcp-ssh-key \
             --vault-password-file <(echo $VAULT_PASSWORD) \
             -u guillaume \
             -v
         env:
+          ANSIBLE_CONFIG: ansible/ansible.cfg
           VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
           GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
 

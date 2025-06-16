@@ -32,3 +32,9 @@ variable "public_subnet_id" {
 variable "private_subnet_id" {
   type = string
 }
+
+variable "ssh_public_key_path" {
+  description = "Chemin vers la clé SSH publique"
+  type        = string
+  default     = "~/.ssh/gcp-ssh-key.pub"
+}

@@ -10,6 +10,7 @@ resource "null_resource" "generate_ansible_inventory" {
     }
 
     depends_on = [
-        module.instances
+        module.instances,
+        module.network
     ]
 }

@@ -9,9 +9,11 @@ error_exit() {
 }
 
 # Variables
-INVENTORY_FILE="../ansible/inventories/hosts.ini"
-BACKUP_FILE="../ansible/inventories/hosts.ini.backup"
+INVENTORY_FILE="../ansible/inventories/hosts.yml"
+BACKUP_FILE="../ansible/inventories/hosts.yml.backup"
 FORCE_UPDATE=false
+REVERSE_PROXY_IP=$(terraform output -raw reverse_proxy_ip)
+SSH_KEY="~/.ssh/gcp-ssh-key"
 
 # Analyser les arguments
 while [[ $# -gt 0 ]]; do
@@ -143,34 +145,115 @@ if [ "$FORCE_UPDATE" = false ] && [ -f "$INVENTORY_FILE" ]; then
     fi
 fi
 
-echo "Génération du fichier hosts.ini..."
+echo "Génération du fichier hosts.yml..."
 
 # Génération du fichier hosts.ini
-cat > ../ansible/inventories/hosts.ini <<EOF
-[frontend]
-frontend1 ansible_host=$(terraform output -raw frontend_ip) ansible_user=guillaume
+cat > ../ansible/inventories/hosts.yml <<EOF
+---
+all:
+  vars:
+    ansible_user: guillaume
+    ansible_port: 22
+    ansible_ssh_private_key_file: ${SSH_KEY}
+    ansible_ssh_common_args: '-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}"'
+  
+  children:
+    frontend:
+      hosts:
+        frontend1:
+          ansible_host: $(terraform output -raw frontend_ip)
+          ansible_port: 22
+    
+    reverse_proxy:
+      hosts:
+        reverse_proxy1:
+          ansible_host: ${REVERSE_PROXY_IP}
+      vars:
+        ansible_port: 22
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    backend:
+      hosts:
+        backend1:
+          ansible_host: $(terraform output -raw backend_ip)
+    
+    database:
+      hosts:
+        database1:
+          ansible_host: $(terraform output -raw database_ip)
+    
+    monitoring:
+      hosts:
+        monitoring1:
+          ansible_host: $(terraform output -raw monitoring_ip)
 
-[reverse_proxy]
-reverse_proxy1 ansible_host=$(terraform output -raw reverse_proxy_ip) ansible_user=guillaume
-
-[backend]
-backend1 ansible_host=$(terraform output -raw backend_ip) ansible_user=guillaume
-
-[database]
-database1 ansible_host=$(terraform output -raw database_ip) ansible_user=guillaume
-
-[monitoring]
-monitoring1 ansible_host=$(terraform output -raw monitoring_ip) ansible_user=guillaume
-
-[all:vars]
-ansible_user=guillaume
-ansible_ssh_private_key_file=~/.ssh/gcp-ssh-key
-ansible_ssh_common_args='-o ProxyCommand="ssh -i ~/.ssh/gcp-ssh-key -W %h:%p -q guillaume@$(terraform output -raw reverse_proxy_ip)"'
-
-[reverse_proxy:vars]
-ansible_user=guillaume
-ansible_port=22
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+    web:
+      children:
+        frontend: {}
+        reverse_proxy: {}
+    
+    infrastructure:
+      children:
+        backend: {}
+        database: {}
+        monitoring: {}
 EOF
 
+# cat > ../ansible/inventories/hosts.ini <<EOF
+# [reverse_proxy]
+# reverse_proxy1 ansible_host=${REVERSE_PROXY_IP}
+
+# [frontend]
+# frontend1 ansible_host=$(terraform output -raw frontend_ip)
+
+# [backend]
+# backend1 ansible_host=$(terraform output -raw backend_ip)
+
+# [database]
+# database1 ansible_host=$(terraform output -raw database_ip)
+
+# [monitoring]
+# monitoring1 ansible_host=$(terraform output -raw monitoring_ip)
+
+# [web:children]
+# frontend
+# reverse_proxy
+
+# [infrastructure:children]
+# backend
+# database
+# monitoring
+
+# [all:vars]
+# ansible_user=guillaume
+# ansible_ssh_private_key_file=${SSH_KEY}
+
+# [reverse_proxy:vars]
+# ansible_ssh_common_args=-o StrictHostKeyChecking=no
+
+# [frontend:vars]
+# ansible_ssh_common_args=-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}" -o StrictHostKeyChecking=no
+
+# [backend:vars]
+# ansible_ssh_common_args=-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}" -o StrictHostKeyChecking=no
+
+# [database:vars]
+# ansible_ssh_common_args=-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}" -o StrictHostKeyChecking=no
+
+# [monitoring:vars]
+# ansible_ssh_common_args=-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}" -o StrictHostKeyChecking=no
+# EOF
+
 echo "Fichier hosts.ini généré avec succès !"
+
+echo "Validation du fichier généré..."
+if ansible-inventory -i ../ansible/inventories/hosts.yml --list > /dev/null 2>&1; then
+    echo "✅ Fichier d'inventaire valide !"
+else
+    echo "❌ Erreur dans le fichier généré !"
+    if [ -f "$BACKUP_FILE" ]; then
+        echo "Restauration de la sauvegarde..."
+        cp "$BACKUP_FILE" "$INVENTORY_FILE"
+    fi
+    exit 1
+fi

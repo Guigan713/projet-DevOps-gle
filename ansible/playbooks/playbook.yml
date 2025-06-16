@@ -1,16 +1,27 @@
+# Play initial pour collecter les facts de tous les serveurs
+- name: Gather facts from all servers
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Debug gathered facts
+      debug:
+        msg: "Server {{ inventory_hostname }} has IP {{ ansible_host }}"
+
 - name: Configure all servers with node_exporter
   hosts: all
-  become: true
+  gather_facts: no
+  become: yes
   roles:
     - node_exporter
   vars_files:
-    - host_vars/monitoring.yml
-    - group_vars/database.yml
+    - ../host_vars/monitoring.yml
+    - ../group_vars/*.yml
     - defaults/main.yml
 
 - name: Ensure user guillaume exists and SSH key is deployed
   hosts: all
-  become: true
+  gather_facts: no
+  become: yes
   tasks:
     - name: Créer l'utilisateur guillaume
       user:
@@ -31,48 +42,124 @@
         key: "{{ lookup('env', 'GCP_SSH_KEY') }}"
         state: present
 
+- name: Install tools prerequisites on differents servers
+  hosts: 
+    - frontend
+    - backend
+    - database
+    - monitoring
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: install rsync
+      ansible.builtin.package:
+        name: rsync
+        state: present
+
+    - name: Installer les dépendances pour Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: yes
+
+    - name: Créer le répertoire pour les clés GPG
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Ajouter la clé GPG Docker pour Debian
+      shell: |
+        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Ajouter le dépôt Docker pour Debian
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+        update_cache: yes
+
+    - name: Installer Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Démarrer et activer Docker
+      become: true
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Ajouter l'utilisateur guillaume au groupe docker
+      become: true
+      ansible.builtin.user:
+        name: guillaume
+        groups: docker
+        append: true
+
 - name: Déployer le frontend
   hosts: frontend
+  gather_facts: no
   become: true
   roles:
     - frontend
   vars_files:
-    - host_vars/frontend-vm.yml
-    - group_vars/all.yml
+    - ../host_vars/frontend-vm.yml
+    - ../group_vars/all.yml
 
 - name: Déployer le backend
   hosts: backend
+  gather_facts: no
   become: true
   roles:
     - backend
   vars_files:
-    - group_vars/vault.yml
-    - group_vars/all.yml
-    - host_vars/backend-vm.yml
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+    - ../host_vars/backend-vm.yml
 
 - name: Déployer la base de données
   hosts: database
+  gather_facts: no
   become: true
   roles:
     - database
   vars_files:
-    - group_vars/*.yml
+    - ../group_vars/all.yml
+    - ../host_vars/database.yml
+    - ../group_vars/vault.yml
 
 - name: Déployer Prometheus & Grafana
   hosts: monitoring
+  gather_facts: no
   become: true
   roles:
     - monitoring
   vars_files:
-    - host_vars/monitoring.yml
-    - group_vars/all.yml
-    - defaults/main.yml
+    - ../host_vars/monitoring.yml
+    - ../group_vars/all.yml
 
 - name: Déployer le reverse proxy NGINX
   hosts: reverse_proxy
+  gather_facts: no
   become: true
   roles:
     - reverse-proxy
   vars_files:
-    - group_vars/all.yml
+    - ../group_vars/all.yml
 

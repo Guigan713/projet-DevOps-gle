@@ -15,7 +15,7 @@ resource "google_compute_instance" "frontend" {
     }
 
     metadata = {
-      ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pub")}"
+      ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
     }
 
     tags = ["frontend"]
@@ -49,8 +49,8 @@ resource "google_compute_instance" "reverse_proxy" {
   }
   
   metadata = {
-      ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pub")}"
-    }
+    ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
+  }
 
   tags = ["reverse-proxy"]
 }
@@ -73,7 +73,7 @@ resource "google_compute_instance" "backend" {
   }
 
   metadata = {
-    ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pub")}"
+    ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
   }
 
   tags = ["backend"]
@@ -97,7 +97,7 @@ resource "google_compute_instance" "database" {
   }
 
   metadata = {
-    ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pub")}"
+    ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
   }
 
   tags = ["database"]
@@ -120,7 +120,7 @@ resource "google_compute_instance" "monitoring" {
   }
 
   metadata = {
-    ssh-keys = "guillaume:${file("~/.ssh/gcp-ssh-key.pub")}"
+    ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
   }
 
   tags = ["monitoring"]

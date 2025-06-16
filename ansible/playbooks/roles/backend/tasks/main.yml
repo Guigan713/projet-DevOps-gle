@@ -1,26 +1,20 @@
-- name: Installer Docker et Docker Compose
-  become: true
-  ansible.builtin.apt:
-    name:
-      - docker.io
-      - docker-compose
-    state: present
-    update_cache: true
+- name: Create backend archive locally
+  archive:
+    path: "{{ project_root }}/backend"
+    dest: "/tmp/backend.tar.gz"
+    format: gz
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - backend
 
-- name: Démarrer et activer Docker
-  become: true
-  ansible.builtin.systemd:
-    name: docker
-    state: started
-    enabled: true
+- name: Copy backend archive to server
+  copy:
+    src: "/tmp/backend.tar.gz"
+    dest: "/tmp/backend.tar.gz"
+  tags:
+    - backend
 
-- name: Ajouter l'utilisateur guillaume au groupe docker
-  become: true
-  ansible.builtin.user:
-    name: guillaume
-    groups: docker
-    append: true
-    
 - name: Create Backend Directory
   ansible.builtin.file:
     path: /home/guillaume/backend
@@ -28,14 +22,46 @@
     owner: guillaume
     group: guillaume
     mode: '0755'
+    recurse: yes
+  become: yes
 
-- name: Copier tous les fichiers backend (incluant Dockerfile)
-  ansible.builtin.copy:
-    src: "{{ backend_source_dir }}"
-    dest: /home/guillaume/backend/
+- name: Extract backend files
+  unarchive:
+    src: "/tmp/backend.tar.gz"
+    dest: "/home/guillaume/"
     owner: guillaume
     group: guillaume
-    mode: preserve
+    remote_src: yes
+  become: yes
+  tags:
+    - backend
+
+- name: Clean up local archive
+  file:
+    path: "/tmp/backend.tar.gz"
+    state: absent
+  delegate_to: localhost
+  run_once: true
+  tags:
+    - backend
+
+- name: Clean up remote archive
+  file:
+    path: "/tmp/backend.tar.gz"
+    state: absent
+  tags:
+    - backend
+
+# - name: Copy Backend Files
+#   copy:
+#     src: "/home/guillaume/projet-DevOps-gle/backend/"
+#     dest: "/home/guillaume/backend/"
+#     owner: guillaume
+#     group: guillaume
+#     mode: '0755'
+#   become: yes
+#   tags:
+#     - backend
 
 - name: Templater le fichier docker-compose.yml
   ansible.builtin.template:

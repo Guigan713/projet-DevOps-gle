@@ -34,27 +34,71 @@ ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml --private-key .
 
 ## Structure de playbook.yml
 
-#### 1. node_exporter
+#### 1. Collecte des facts système
+
+> [!NOTE]
+> - Collecte les informations système de tous les serveurs pour initialiser les variables Ansible nécessaires au déploiement
+> - Affiche l'adresse IP de chaque serveur pour validation de l'inventaire
+
+#### 2. Déploiement de node_exporter
+
+> [!NOTE]
+
+> - Déploiement de node_exporter sur tous les serveurs pour collecter les métriques système
+> - Utilise le rôle dédié avec les variables de configuration des fichiers host_vars, group_vars et defaults
+
+#### 3. Configuration utilisateur système
+
+> [!NOTE]
+
+> - Création de l'utilisateur "" sur tous les serveurs
+> - Configuration du répertoire SSH avec les permissions appropriées (700)
+> - Déploiement de la clé SSH publique depuis la variable d'environnement GCP_SSH_KEY
+
+#### 4. Installation des prérequis système
+
+> [!NOTE]
+
+> - Installation de rsync pour la synchronisation de fichiers
+> - Mise à jour du cache des paquets APT avec validation temporaire (1h)
+> - Installation des dépendances système essentielles : apt-transport-https, ca-certificates, curl, gnupg, lsb-release
+
+#### 5. Installation de Docker et Docker Compose
+
+> [!NOTE]
+
+> - Installation des paquets docker.io et docker-compose via APT
+> - Configuration du service Docker pour démarrage automatique
+> - Ajout de l'utilisateur guillaume au groupe docker pour les permissions de conteneurisation
+
+
+#### 6. node_exporter
+
 > [!NOTE]
 > - Déploiement de **node_exporter** sur tous les serveurs pour collecter les métriques système
 
-#### 2. frontend
+#### 7. frontend
+
 > [!NOTE]
 > - Déploiement de l’application frontend sur les hôtes du groupe frontend.
 
-#### 3. backend
+#### 8. backend
+
 > [!NOTE]
 > - Déploiement de l’application backend sur les hôtes du groupe backend.
 
-#### 4. database
+#### 9. database
+
 > [!NOTE]
 > - Déploiement et configuration de la base de données sur les hôtes du groupe database.
 
-#### 5. Monitoring
+#### 10. Monitoring
+
 > [!NOTE]
 > - Déploiement de Prometheus et Grafana sur les hôtes du groupe monitoring pour la surveillance et la visualisation des métriques.
 
-#### 6. reverse-proxy (NGINX)
+#### 11. reverse-proxy (NGINX)
+
 > [!NOTE]
 > - Mise en place d’un reverse proxy NGINX sur les hôtes du groupe reverse_proxy pour centraliser et sécuriser l’accès aux différents composants de la stack.
 
@@ -66,58 +110,47 @@ Ce rôle Ansible permet d’automatiser l’installation de Docker et Docker Com
 
 ### Liste des tasks
 
-#### 1. Installation de Docker et Docker-compose
-
-> [!NOTE]
-> - Installe les paquets docker.io et docker-compose, en s’assurant que la liste des paquets est à jour.
-
-#### 2. Création du dossier backend
+#### 1. Création du dossier backend
 
 > [!NOTE]
 > - Crée le dossier /home/ubuntu/backend avec les bons droits pour l’utilisateur ubuntu.
 
-#### 3. Copie des fichiers backend
+#### 2. Copie des fichiers backend
 
 > [!NOTE]
 > - Copie l’intégralité du dossier local backend (contenant le Dockerfile et le fichier docker-compose.yml) dans le dossier /home/ubuntu/backend sur la machine distante.
 
-#### 4. Lancement du service avec Compose
+#### 3. Lancement du service avec Compose
 
 > [!NOTE]
 > - Exécute `docker-compose up -d` depuis le dossier /home/ubuntu/backend pour démarrer les services en arrière-plan.
-
 
 
 ## Rôle database
 
 ### Liste des tasks
 
-#### 1. Installation de Docker et Docker Compose
-
-> [!NOTE]
-> - Mise à jour du cache et installation des paquets docker.io et docker-compose.
-
-#### 2. Création du répertoire Database
+#### 1. Création du répertoire Database
 
 > [!NOTE]
 > - Création du dossier /home/ubuntu/database appartenant à l’utilisateur ubuntu.
 
-#### 3. Copie des fichiers du service MySQL
+#### 2. Copie des fichiers du service MySQL
 
 > [!NOTE]
 > - Copie tout le contenu local du dossier database vers /home/ubuntu/database sur la machine cible.
 
-#### 4. Démarrage des services via Compose
+#### 3. Démarrage des services via Compose
 
 > [!NOTE]
 > - Exécution de `docker-compose up -d` dans ce dossier pour démarrer les conteneurs MySQL (et éventuellement d’autres services définis dans le compose).
 
-#### 5. Déploiement du script de sauvegarde
+#### 4. Déploiement du script de sauvegarde
 
 > [!NOTE]
 > - Copie du script mysql_backup.sh (stocké dans /templates) dans /usr/local/bin/, avec les droits d’exécution (0700).
 
-#### 6. Planification des sauvegardes automatiques
+#### 5. Planification des sauvegardes automatiques
 
 > [!NOTE]
 > - Ajout d’une tâche cron exécutant chaque jour à 2h du matin le script de backup, avec log des sorties dans /var/log/mysql_backup.log.
@@ -130,22 +163,17 @@ Ce rôle Ansible permet d’automatiser l’installation de Docker et Docker Com
 
 ### Liste des tasks
 
-#### 1. Installation de Docker et Docker-compose
-
-> [!NOTE]
-> - Installe les paquets docker.io et docker-compose, en s’assurant que la liste des paquets est à jour.
-
-#### 2. Création du dossier frontend
+#### 1. Création du dossier frontend
 
 > [!NOTE]
 > - Crée le dossier /home/ubuntu/frontend avec les bons droits pour l’utilisateur ubuntu.
 
-#### 3. Copie des fichiers frontend
+#### 2. Copie des fichiers frontend
 
 > [!NOTE]
 > - Copie l’intégralité du dossier local frontend (contenant le Dockerfile et le fichier docker-compose.yml) dans le dossier /home/ubuntu/frontend sur la machine distante.
 
-#### 4. Lancement du service avec Compose
+#### 3. Lancement du service avec Compose
 
 > [!NOTE]
 > - Exécute `docker-compose up -d` depuis le dossier /home/ubuntu/frontend pour démarrer les services en arrière-plan.
@@ -158,22 +186,17 @@ Ce rôle Ansible permet d’installer Docker et Docker Compose, de préparer l�
 
 ### Liste des tasks
 
-#### 1. Installation de Docker et Docker-compose
-
-> [!NOTE]
-> - Installe les paquets docker.io et docker-compose, en s’assurant que la liste des paquets est à jour.
-
-#### 2. Création du dossier de monitoring
+#### 1. Création du dossier de monitoring
 
 > [!NOTE]
 > - Crée /home/ubuntu/monitoring avec les droits appropriés (utilisateur et groupe : ubuntu).
 
-#### 3. Copie des fichiers de configuration de monitoring
+#### 2. Copie des fichiers de configuration de monitoring
 
 > [!NOTE]
 > - Copie l’ensemble du dossier local monitoring (contenant notamment docker-compose.yml et prometheus.yml) vers /home/ubuntu/monitoring sur la machine distante
 
-#### 4. Déploiement de la stack de monitoring via Docker Compose
+#### 3. Déploiement de la stack de monitoring via Docker Compose
 
 > [!NOTE]
 > - Exécute la commande `docker-compose up -d` dans /home/ubuntu/monitoring pour lancer les conteneurs Prometheus et Grafana (ou tout autre outil de monitoring défini dans le docker-compose.yml).
