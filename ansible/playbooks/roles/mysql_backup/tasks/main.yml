@@ -1,0 +1,36 @@
+- name: Create backup scripts directory
+  become: yes
+  file:
+    path: /opt/scripts
+    state: directory
+    mode: '0755'
+
+- name: Installer le script de backup MySQL
+  copy:
+    src: templates/mysql-backup.sh.j2
+    dest: /opt/scripts/mysql-backup.sh
+    mode: '0755'
+    owner: root
+
+- name: Configurer le cron job de backup
+  cron:
+    name: "MySQL Backup quotidien"
+    minute: "0"
+    hour: "2"
+    job: "/opt/scripts/mysql-backup.sh >> /var/log/mysql-backup.log 2>&1"
+    user: root
+
+- name: Gérer la rotation de logs pour mysql-backup
+  copy:
+    dest: /etc/logrotate.d/mysql-backup
+    content: |
+      /var/log/mysql-backup.log {
+          daily
+          rotate 30
+          compress
+          missingok
+          notifempty
+      }
+    owner: root
+    group: root
+    mode: '0644'

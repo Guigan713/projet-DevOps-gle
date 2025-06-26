@@ -1,67 +1,81 @@
-# Module Terraform - Google Compute Instances
+# Module Terraform - Cluster Docker Swarm sur Google Compute Engine
 
-Ce module Terraform permet de créer une infrastructure complète d'instances Google Compute Engine avec une architecture multi-tiers incluant frontend, backend, base de données, monitoring et reverse proxy.
-Description
+Ce module Terraform permet d’automatiser le déploiement d’un cluster Docker Swarm sur Google Cloud Platform avec Gestion HA (High Availability) : managers + workers, réseau privé/public, et IP statique pour Load Balancer/Accès public/SSH sécurisé.
 
 ## Le module configure automatiquement :
 
 > [!NOTE]
-> - **Frontend** : Instance pour l'interface utilisateur (réseau privé)
-> - **Backend** : Instance pour la logique métier (réseau privé)
-> - **Database** : Instance MySQL (réseau privé)
-> - **Monitoring** : Instance de surveillance (réseau privé)
-> - **Reverse Proxy** : Instance avec IP publique statique (réseau public)
-> - **Adresse IP statique** : IP publique réservée pour le reverse proxy
+> - Provisionne une IP publique statique (Load Balancer/SSH)
+> - Déploie automatiquement plusieurs managers Swarm (HA configurable)
+> - Déploie automatiquement plusieurs workers Swarm
+> - Les accès SSH sont configurés via clé publique fournie
+> - Architecture réseau : public pour le leader, privé pour les autres nœuds/machines
+> - Séparation claire des rôles avec tags réseau
+> - Tous les outputs essentiels sont exposés (pour outputs DNS ou orchestration)
+
 
 ## Architecture
 
-`Internet → Reverse Proxy (IP publique) → Frontend/Backend/Database/Monitoring (réseau privé)`
+```
+Internet
+   │
+[IP publique statique / Load Balancer]
+   │
+┌─────────────────────────┐
+│  Swarm Manager Leader   │  <-- accès SSH (public)
+└─────────┬───────────────┘
+          │
+   [Managers Swarm (privé)]
+   [Workers Swarm (privé)]
+```
+
+> - 1 manager avec IP publique (pour accès initial/SSH/bootstrapping)
+> - n managers + n workers sur sous-réseaux privés, suivant tes variables
+> - IP statique séparée, idéale pour mise à jour DNS/future intégration LB
+
 
 ## Resources créées
 
-| Resource | Nom | Type d'instance | Réseau | Description |
-|----------|-----|-----------------|---------|-------------|
-| `google_compute_address` | reverse-proxy-ip | - | Public | IP statique réservée |
-| `google_compute_instance` | frontend | e2-micro | Privé | Interface utilisateur |
-| `google_compute_instance` | reverse-proxy | e2-micro | Public | Point d'entrée |
-| `google_compute_instance` | backend | e2-micro | Privé | API/Services |
-| `google_compute_instance` | database-mysql | e2-micro | Privé | Base de données |
-| `google_compute_instance` | monitoring | e2-medium | Privé | Surveillance |
+| Resource                   | Rôle                        | Réseau      | Spécificité                         |
+|----------------------------|-----------------------------|-------------|-------------------------------------|
+| `google_compute_address`   | IP statique "swarm_lb_ip"   | Public      | Pour Load Balancer/leader SSH       |
+| `google_compute_instance`  | Managers Swarm              | Public/Privé| 1 exposé, autres privés             |
+| `google_compute_instance`  | Workers Swarm               | Privé       | Tous privés/not exposés             |
+
 
 ## Variables requises
 
-| Variable | Type | Description | Exemple |
-|----------|------|-------------|---------|
-| `zone` | string | Zone Google Cloud pour les instances | `"europe-west1-b"` |
-| `region` | string | Région Google Cloud pour l'IP statique | `"europe-west1"` |
-| `project` | string | ID du projet Google Cloud | `"my-gcp-project"` |
-| `image` | string | Image système pour les instances | `"ubuntu-os-cloud/ubuntu-2004-lts"` |
-| `vpc_id` | string | ID du réseau VPC | `"projects/my-project/global/networks/my-vpc"` |
-| `private_subnet_id` | string | ID du sous-réseau privé | `"projects/my-project/regions/europe-west1/subnetworks/private-subnet"` |
-| `public_subnet_id` | string | ID du sous-réseau public | `"projects/my-project/regions/europe-west1/subnetworks/public-subnet"` |
+| Variable              | Type    | Description                              | Exemple                                                                                 |
+|-----------------------|---------|------------------------------------------|-----------------------------------------------------------------------------------------|
+| `project`             | string  | ID du projet GCP                         | `"my-gcp-project"`                                                                      |
+| `region`              | string  | Région Google Cloud                      | `"europe-west1"`                                                                        |
+| `zone`                | string  | Zone spécifique                          | `"europe-west1-b"`                                                                      |
+| `image`               | string  | Image système à utiliser                 | `"debian-cloud/debian-12"`                                                              |
+| `vpc_id`              | string  | ID du réseau VPC                         | `"projects/my-project/global/networks/my-vpc"`                                           |
+| `public_subnet_id`    | string  | ID du sous-réseau public                 | `"projects/my-project/regions/europe-west1/subnetworks/public-subnet"`                   |
+| `private_subnet_id`   | string  | ID du sous-réseau privé                  | `"projects/my-project/regions/europe-west1/subnetworks/private-subnet"`                  |
+| `ssh_public_key_path` | string  | Chemin de la clé SSH publique            | `"~/.ssh/gcp-ssh-key.pub"`                                                              |
+| `swarm_manager_count` | number  | Nb de managers Swarm (≥3 pour HA)        | `3`                                                                                      |
+| `swarm_worker_count`  | number  | Nb de workers Swarm                      | `2`                                                                                      |
+| `manager_machine_type`| string  | Type de VM pour managers                 | `"e2-small"`                                                                            |
+| `worker_machine_type` | string  | Type de VM pour workers                  | `"e2-micro"`                                                                            |
+
 
 ## Outputs
 
-> - output "frontend_private_ip" {}
-> - output "reverse_proxy_public_ip" {}
-> - output "reverse_proxy_static_ip_id" {}
-> - output "backend_private_ip" {}
-> - output "database_private_ip" {}
-> - output "monitoring_private_ip" {}
+| Output                   | Description                                   |
+|--------------------------|-----------------------------------------------|
+| `swarm_manager_ips`      | IPs privées des managers Swarm                |
+| `swarm_worker_ips`       | IPs privées des workers Swarm                 |
+| `swarm_lb_ip`            | IP publique statique assignée au cluster/LB   |
+| `swarm_leader_ip`        | IP privée du manager leader                   |
+| `swarm_leader_public_ip` | IP publique (SSH) du leader                   |
+| `swarm_cluster_info`     | Infos globales sur managers / workers / IP LB |
+
 
 ## Sécurité
 
-### Accès SSH
+> - Seul le leader manager dispose d’une IP publique pour SSH.
+> - SSH configuré via la clé fournie par la variable ssh_public_key_path, injectée à l’utilisateur deploy par défaut.
+> - Les tags réseau permettent une segmentation claire des flux pour firewall GCP.
 
-> - Clé SSH configurée pour l'utilisateur guillaume
-> - **Chemin de la clé** : ~/.ssh/gcp-ssh-key.pub
-
-### Tags de réseau
-
-Chaque instance possède des tags pour les règles de firewall :
-
-> - **frontend** : Instance frontend
-> - **backend** : Instance backend
-> - **database** : Instance database
-> - **monitoring** : Instance monitoring
-> - **reverse-proxy** : Instance reverse proxy

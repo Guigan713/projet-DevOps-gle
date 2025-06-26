@@ -1,5 +1,0 @@
----
-- name: restart frontend
-  ansible.builtin.shell: docker compose restart
-  args:
-    chdir: /home/guillaume/frontend

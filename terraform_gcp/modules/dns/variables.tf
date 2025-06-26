@@ -8,6 +8,19 @@ variable "domain_name" {
     type = string
 }
 
-variable "reverse_proxy_ip" {
-    type = string
+variable "swarm_lb_ip" {
+  description = "IP du Load Balancer Swarm"
+  type        = string
+}
+
+# variable "create_admin_subdomain" {
+#   description = "Créer un sous-domaine admin.domain.com"
+#   type        = bool
+#   default     = false
+# }
+
+variable "create_api_subdomain" {
+  description = "Créer un sous-domaine api.domain.com"
+  type        = bool
+  default     = false
 }

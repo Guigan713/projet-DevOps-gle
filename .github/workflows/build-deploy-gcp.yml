@@ -7,42 +7,25 @@ on:
   #     - completed
   push:
     branches:
-      - deploy
+      - main
 
 jobs:
-  configure-servers:
-    name: Configure instances
+  deploy-ansible:
+    name: Déployer avec Ansible
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies & build frontend
-        run: |
-          cd frontend 
-          npm install
-          npm run build
-
-      - name: Install dependencies & build backend
-        run: |
-          cd backend 
-          npm install
-          npm run build
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11'
   
       - name: Install Ansible
         run: |
           python -m pip install --upgrade pip
-          pip install ansible boto3
+          pip install ansible boto3 community.docker
           ansible --version
 
       - name: Authenticate to Google Cloud
@@ -59,45 +42,18 @@ jobs:
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp-ssh-key
           chmod 600 ~/.ssh/gcp-ssh-key
 
-      - name: Configure SSH for Bastion Access
+      - name: Configure SSH for Bastion & Private Access
         run: |
-          mkdir -p ~/.ssh
-          cat > ~/.ssh/config << EOF
-          Host bastion
-            HostName 34.38.190.28
-            User guillaume
-            IdentityFile ~/.ssh/gcp-ssh-key
-            StrictHostKeyChecking no
-            UserKnownHostsFile /dev/null
-            ControlMaster auto
-            ControlPath ~/.ssh/control-%r@%h:%p
-            ControlPersist 5m
-          
-          Host 10.0.2.*
-            User guillaume
-            IdentityFile ~/.ssh/gcp-ssh-key
-            ProxyJump bastion
-            StrictHostKeyChecking no
-            UserKnownHostsFile /dev/null
-          EOF
+          cp ansible/ssh-config ~/.ssh/config
           chmod 600 ~/.ssh/config
-
-      # - name: Test Connectivity
-      #   run: |
-      #     cd ansible
-      #     echo "Testing bastion connection..."
-      #     ansible reverse_proxy -m ping --private-key ~/.ssh/gcp-ssh-key
-          
-      #     echo "Testing private network via bastion..."
-      #     ansible frontend,backend,database,monitoring -m ping --private-key ~/.ssh/gcp-ssh-key
 
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook -i ansible/inventories/hosts.yml ansible/playbooks/playbook.yml \
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > ansible/.vault_pass
+          ansible-playbook -i ansible/inventories/swarm-hosts.ini ansible/playbooks/playbook.yml \
             --private-key ~/.ssh/gcp-ssh-key \
-            --vault-password-file <(echo $VAULT_PASSWORD) \
-            -u guillaume \
-            -v
+            --vault-password-file ansible/.vault_pass \
+            -u deploy -v
         env:
           ANSIBLE_CONFIG: ansible/ansible.cfg
           VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}

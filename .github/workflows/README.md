@@ -56,7 +56,7 @@ Les informations sensibles sont injectées via les GitHub Secrets :
 > - **SONAR_ORG** : Organisation SonarQube.
 
 
-## Workflow de déploiement -> build-deploy.yml
+## Workflow de déploiement -> build-deploy-gcp.yml
 
 Ce workflow GitHub Actions permet de build et déployer automatiquement l'application dès lors que le workflow de tests (Test Workflow) a été exécuté avec succès.
 

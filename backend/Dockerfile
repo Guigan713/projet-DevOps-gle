@@ -13,9 +13,6 @@ RUN npm install
 # Copie tous les fichiers du projet dans le conteneur
 COPY . .
 
-# Copie spécifiquement le fichier d'environnement .env
-COPY .env .env
-
 # Expose le port 5000 pour l'accès au serveur backend
 EXPOSE 5000
 
@@ -31,8 +28,10 @@ WORKDIR /app
 # Copie les fichiers package.json et package-lock.json
 COPY package*.json ./
 
+RUN apt update && apt install -y curl
+
 # Installation optimisée des dépendances de production uniquement
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copie tous les fichiers du projet dans le stage production
 COPY . .

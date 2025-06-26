@@ -1,0 +1,83 @@
+---
+# Partie Déploiement
+- name: Install jsondiff for python3 (used by Ansible)
+  pip:
+    name: jsondiff
+    executable: pip3
+    extra_args: --break-system-packages
+  become: yes
+
+- name: Prune unused Docker images
+  shell: docker image prune -af
+
+- name: Prune unused Docker containers
+  shell: docker container prune -f
+
+- name: Remove existing stack (if exists)
+  docker_stack:
+    name: "{{ project_name }}"
+    state: absent
+  ignore_errors: yes
+
+- name: Wait for stack removal
+  pause:
+    seconds: 10
+
+- name: Ensure Docker overlay network exists (app_network)
+  community.docker.docker_network:
+    name: app_network
+    driver: overlay
+    attachable: true
+    scope: swarm
+    internal: false
+    state: present
+
+- name: Deploy application stack
+  docker_stack:
+    name: "{{ project_name }}"
+    compose:
+      - "{{ app_directory }}/compose-swarm.yml"
+    state: present
+  register: stack_deploy
+
+- name: Wait for services to be ready
+  pause:
+    seconds: 30
+    prompt: "Waiting for services to start..."
+
+# Partie Vérification
+- name: Check stack deployment status
+  community.docker.docker_stack_info:
+  register: stack_info
+
+- name: Trouver mon stack
+  set_fact:
+    my_stack: "{{ stack_info.results | selectattr('Name', 'equalto', 'myapp') | list }}"
+
+- name: Display stack services count
+  debug:
+    msg: "Nb de services du stack: {{ stack_info.results[0].Services }}"
+  when: stack_info.results is defined and stack_info.results | length > 0
+
+- name: Vérifier tous les services
+  community.docker.docker_swarm_service_info:
+    name: "myapp_{{ item }}"
+  register: all_services_info
+  loop: "{{ app_services }}"
+  changed_when: false
+
+- name: Échouer si services manquants
+  fail:
+    msg: "Il manque : {{ app_services | reject('in', all_services_info.results | selectattr('service', 'defined') | map(attribute='invocation.module_args.name') | list) | list }}"
+  when: (all_services_info.results | selectattr('service', 'defined') | list | length) != (app_services | length)
+
+- name: Display service endpoints
+  debug:
+    msg: |
+      Application deployed successfully!
+      
+      Frontend: http://{{ ansible_host }}
+      Backend API: http://{{ ansible_host }}/api
+      Grafana: http://{{ ansible_host }}:3000 (admin/{{ grafana_password }})
+      Prometheus: http://{{ ansible_host }}:9090
+      Traefik Dashboard: http://{{ ansible_host }}:8080

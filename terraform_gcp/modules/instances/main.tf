@@ -1,40 +1,23 @@
-resource "google_compute_instance" "frontend" {
-    name = "frontend"
-    machine_type = "e2-micro"
-    zone = var.zone
-
-    boot_disk {
-        initialize_params {
-            image = var.image
-        }
-    }
-
-    network_interface {
-        network = var.vpc_id
-        subnetwork = var.private_subnet_id
-    }
-
-    metadata = {
-      ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
-    }
-
-    tags = ["frontend"]
-}
-
-resource "google_compute_address" "reverse_proxy_ip" {
-  name = "reverse-proxy-ip"
-  region = var.region
+# IP statique pour le Load Balancer
+resource "google_compute_address" "swarm_lb_ip" {
+  name    = "swarm-lb-ip"
+  region  = var.region
   project = var.project
 }
 
-resource "google_compute_instance" "reverse_proxy" {
-  name         = "reverse-proxy"
-  machine_type = "e2-micro"
+# Swarm Managers
+resource "google_compute_instance" "swarm_manager" {
+  count        = var.swarm_manager_count
+  name         = "swarm-manager-${count.index + 1}"
+  machine_type = var.manager_machine_type
   zone         = var.zone
+
+  can_ip_forward = true
 
   boot_disk {
     initialize_params {
       image = var.image
+      size  = 20 
     }
   }
 
@@ -42,28 +25,33 @@ resource "google_compute_instance" "reverse_proxy" {
     network    = var.vpc_id
     subnetwork = var.public_subnet_id
     
-    # for reserved static ip
-    access_config {
-      nat_ip = google_compute_address.reverse_proxy_ip.address
+    # Premier manager avec IP publique pour accès SSH
+    dynamic "access_config" {
+      for_each = count.index == 0 ? [1] : []
+      content {
+        nat_ip = google_compute_address.swarm_lb_ip.address
+      }
     }
   }
-  
+
   metadata = {
-    ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
+    ssh-keys = "deploy:${file(var.ssh_public_key_path)}"
   }
 
-  tags = ["reverse-proxy"]
+  tags = ["swarm-node", "swarm-manager"]
 }
 
-
-resource "google_compute_instance" "backend" {
-  name         = "backend"
-  machine_type = "e2-micro"
+# Swarm Workers
+resource "google_compute_instance" "swarm_worker" {
+  count        = var.swarm_worker_count
+  name         = "swarm-worker-${count.index + 1}"
+  machine_type = var.worker_machine_type
   zone         = var.zone
 
   boot_disk {
     initialize_params {
       image = var.image
+      size  = 20
     }
   }
 
@@ -73,55 +61,9 @@ resource "google_compute_instance" "backend" {
   }
 
   metadata = {
-    ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
+    ssh-keys = "deploy:${file(var.ssh_public_key_path)}"
   }
 
-  tags = ["backend"]
+  tags = ["swarm-node", "swarm-worker"]
 }
 
-
-resource "google_compute_instance" "database" {
-  name         = "database-mysql"
-  machine_type = "e2-micro"
-  zone         = var.zone
-
-  boot_disk {
-    initialize_params {
-      image = var.image
-    }
-  }
-
-  network_interface {
-    network    = var.vpc_id
-    subnetwork = var.private_subnet_id
-  }
-
-  metadata = {
-    ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
-  }
-
-  tags = ["database"]
-}
-
-resource "google_compute_instance" "monitoring" {
-  name         = "monitoring"
-  machine_type = "e2-medium"
-  zone         = var.zone
-
-  boot_disk {
-    initialize_params {
-      image = var.image
-    }
-  }
-
-  network_interface {
-    network    = var.vpc_id
-    subnetwork = var.private_subnet_id
-  }
-
-  metadata = {
-    ssh-keys = "guillaume:${file(var.ssh_public_key_path)}"
-  }
-
-  tags = ["monitoring"]
-}

@@ -4,11 +4,23 @@ variable "vpc_id" {
 }
 
 variable "mon_ip" {
-  description = "Ton IP publique autorisée à accéder à SSH et aux outils de monitoring"
+  description = "IP publique perso"
   type        = string
 }
 
 variable "vpc_name" {
   description = "Nom du VPC"
   type = string
+}
+
+variable "public_subnet_cidr" {
+  description = "Le CIDR du subnet public"
+  type        = string
+  # default     = "10.0.1.0/24"
+}
+
+variable "private_subnet_cidr" {
+  description = "Le CIDR du subnet privé"
+  type        = string
+  # default     = "10.0.2.0/24"
 }

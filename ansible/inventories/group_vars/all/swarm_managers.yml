@@ -1,0 +1,25 @@
+
+# Réplication services (seulement sur managers)
+frontend_replicas: 2
+backend_replicas: 2
+
+# Monitoring configuration
+prometheus_scrape_interval: "15s"
+prometheus_evaluation_interval: "15s"
+node_exporter_scrape_interval: "30s"
+app_scrape_interval: "30s"
+db_scrape_interval: "30s"
+traefik_scrape_interval: "30s"
+docker_scrape_interval: "30s"
+
+# Prometheus retention
+prometheus_retention_time: "15d"
+prometheus_retention_size: "10GB"
+
+# Node exporter
+node_exporter_port: 9100
+
+# Grafana
+grafana_admin_user: "admin"
+grafana_domain: "grafana.{{ domain_name }}"
+prometheus_domain: "prometheus.{{ domain_name }}"

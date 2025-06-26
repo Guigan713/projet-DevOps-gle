@@ -43,7 +43,11 @@ Resources publiques                               Resources privées
 
 ## Outputs
 
-> - output "vpc_id" {}
-> - output "public_subnet_id" {}
-> - output "private_subnet_id" {}
-> - output "vpc_name" {}
+| Output                | Description                                      |
+|-----------------------|--------------------------------------------------|
+| `vpc_id`              | ID of the Swarm VPC                              |
+| `vpc_name`            | Name of the Swarm VPC                            |
+| `public_subnet_id`    | ID of the public subnet for Swarm managers       |
+| `private_subnet_id`   | ID of the private subnet for Swarm workers       |
+| `public_subnet_cidr`  | CIDR block of the public subnet                  |
+| `private_subnet_cidr` | CIDR block of the private subnet                 |

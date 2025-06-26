@@ -1,45 +1,52 @@
-- name: Créer le dossier de monitoring
-  ansible.builtin.file:
-    path: /home/guillaume/monitoring
+- name: Create monitoring configuration directories
+  file:
+    path: "{{ item }}"
     state: directory
-    owner: guillaume
-    group: guillaume
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
     mode: '0755'
+  loop:
+    - /opt/monitoring/prometheus
+    - /opt/monitoring/grafana/provisioning/datasources
+    - /opt/monitoring/grafana/provisioning/dashboards
+    - /opt/monitoring/grafana/dashboards
+    - /opt/monitoring/grafana/dashboards/app
+    - /opt/monitoring/grafana/dashboards/swarm
+  when: inventory_hostname == groups['swarm_managers'][0]
 
-- name: copier le fichier prometheus.yml avec les variables
-  ansible.builtin.template:
-    src: prometheus.yml.j2
-    dest: /home/guillaume/monitoring/prometheus.yml
-    owner: guillaume
-    group: guillaume
+
+- name: Generate Prometheus configuration
+  template:
+    src: templates/prometheus.yml.j2
+    dest: /opt/monitoring/prometheus/prometheus.yml
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
     mode: '0644'
+  when: inventory_hostname == groups['swarm_managers'][0]
 
-- name: Copier le fichier docker-compose.yml
-  ansible.builtin.copy:
-    src: docker-compose.yml
-    dest: /home/guillaume/monitoring/docker-compose.yml
-    owner: guillaume
-    group: guillaume
+- name: Generate Grafana datasource configuration
+  template:
+    src: templates/grafana_datasource.yml.j2
+    dest: /opt/monitoring/grafana/provisioning/datasources/prometheus.yml
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
     mode: '0644'
+  when: inventory_hostname == groups['swarm_managers'][0]
 
-- name: Arrêter les services existants (si ils existent)
-  ansible.builtin.shell: docker compose down
-  args:
-    chdir: /home/guillaume/monitoring
-  ignore_errors: true
+- name: Generate Grafana dashboard configuration
+  template:
+    src: templates/grafana-dashboard-provider.yml.j2
+    dest: /opt/monitoring/grafana/provisioning/dashboards/default.yml
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0644'
+  when: inventory_hostname == groups['swarm_managers'][0]
 
-- name: Nettoyer les anciennes images si nécessaire
-  ansible.builtin.shell: docker image prune -f
-  when: monitoring_cleanup | default(false)
-
-- name: Lancer Docker Compose pour Prometheus et Grafana
-  ansible.builtin.command: docker compose up -d
-  args:
-    chdir: /home/guillaume/monitoring
-  register: docker_compose_result
-
-- name: Vérifier l'état des conteneurs
-  ansible.builtin.shell: docker compose ps
-  args:
-    chdir: /home/guillaume/monitoring
-  register: containers_status
+- name: Copy Docker Swarm dashboard
+  template:
+    src: templates/docker-swarm-dashboard.json.j2
+    dest: /opt/monitoring/grafana/dashboards/docker-swarm.json
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0644'
+  when: inventory_hostname == groups['swarm_managers'][0]

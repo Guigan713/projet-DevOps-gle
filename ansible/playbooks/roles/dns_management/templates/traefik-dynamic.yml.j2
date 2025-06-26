@@ -1,0 +1,102 @@
+http:
+  routers:
+    frontend-router:
+      entryPoints:
+        - web
+        - websecure
+      rule: "Host(`{{ domain_name }}`)"
+      service: frontend-service
+      {{ '- middlewares: [redirect-to-https]' if ssl_enabled }}
+      {% if ssl_enabled %}
+      tls:
+        certResolver: letsencrypt
+      {% endif %}
+
+    api-router:
+      entryPoints:
+        - web
+        - websecure
+      rule: "Host(`{{ domain_name }}`) && PathPrefix(`/api`)"
+      service: backend-service
+      {{ '- middlewares: [redirect-to-https]' if ssl_enabled }}
+      {% if ssl_enabled %}
+      tls:
+        certResolver: letsencrypt
+      {% endif %}
+
+    {% if traefik_dashboard_enabled %}
+    traefik-dashboard:
+      entryPoints:
+        - web
+        - websecure
+      rule: "Host(`{{ traefik_domain }}`)"
+      service: api@internal
+      {{ '- middlewares: [redirect-to-https]' if ssl_enabled }}
+      {% if ssl_enabled %}
+      tls:
+        certResolver: letsencrypt
+      {% endif %}
+    {% endif %}
+
+    {% if grafana_domain is defined %}
+    grafana-router:
+      entryPoints:
+        - web
+        - websecure
+      rule: "Host(`{{ grafana_domain }}`)"
+      service: grafana-service
+      {{ '- middlewares: [redirect-to-https]' if ssl_enabled }}
+      {% if ssl_enabled %}
+      tls:
+        certResolver: letsencrypt
+      {% endif %}
+    {% endif %}
+
+    {% if prometheus_domain is defined %}
+    prometheus-router:
+      entryPoints:
+        - web
+        - websecure
+      rule: "Host(`{{ prometheus_domain }}`)"
+      service: prometheus-service
+      {{ '- middlewares: [redirect-to-https]' if ssl_enabled }}
+      {% if ssl_enabled %}
+      tls:
+        certResolver: letsencrypt
+      {% endif %}
+    {% endif %}
+
+  services:
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ project_name }}_frontend:{{ frontend_port }}"
+    backend-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ project_name }}_backend:{{ backend_port }}"
+    grafana-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ project_name }}_grafana:3000"
+    prometheus-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ project_name }}_prometheus:9090"
+
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+{% if ssl_enabled %}
+tls:
+  certificatesResolvers:
+    letsencrypt:
+      acme:
+        email: {{ acme_email }}
+        storage: /letsencrypt/acme.json
+        dnsChallenge:
+          provider: gcloud
+{% endif %}

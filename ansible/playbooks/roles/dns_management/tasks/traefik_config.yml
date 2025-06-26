@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible-community/schemas/main/f/ansible-tasks.json
+---
+- name: Create Traefik configuration directory
+  file:
+    path: /opt/docker/traefik/config
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Generate Traefik dynamic configuration
+  template:
+    src: traefik-dynamic.yml.j2
+    dest: /opt/docker/traefik/config/dynamic.yml
+    mode: '0644'
+  become: true
+  notify: restart traefik
+
+# - name: Update Traefik Docker Compose configuration
+#   template:
+#     src: traefik-compose.yml.j2
+#     dest: /opt/docker/traefik/docker-compose.yml
+#     mode: '0644'
+#   become: true
+#   notify: restart traefik

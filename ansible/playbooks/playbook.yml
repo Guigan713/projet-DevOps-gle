@@ -1,62 +1,61 @@
-# Play initial pour collecter les facts de tous les serveurs
+# Configuration SSH
 - name: Gather facts from all servers
   hosts: all
   gather_facts: yes
   tasks:
-    - name: Debug gathered facts
+    - name: Display server information
       debug:
-        msg: "Server {{ inventory_hostname }} has IP {{ ansible_host }}"
+        msg: "Server {{ inventory_hostname }} ready at {{ ansible_host }} - Role: {{ swarm_role }}"
 
-- name: Configure all servers with node_exporter
-  hosts: all
-  gather_facts: no
-  become: yes
-  roles:
-    - node_exporter
-  vars_files:
-    - ../host_vars/monitoring.yml
-    - ../group_vars/*.yml
-    - defaults/main.yml
-
-- name: Ensure user guillaume exists and SSH key is deployed
-  hosts: all
-  gather_facts: no
-  become: yes
-  tasks:
-    - name: Créer l'utilisateur guillaume
+    - name: Ensure SSH user exists
+      become: yes
       user:
-        name: guillaume
+        name: "{{ ssh_user }}"
         state: present
+        shell: /bin/bash
+        create_home: yes
+        groups: sudo
+        append: yes
 
-    - name: Créer le dossier .ssh
+    - name: Configure SSH directory
+      become: yes
       file:
-        path: /home/guillaume/.ssh
+        path: "/home/{{ ssh_user }}/.ssh"
         state: directory
-        owner: guillaume
-        group: guillaume
-        mode: 0700
+        owner: "{{ ssh_user }}"
+        group: "{{ ssh_user }}"
+        mode: '0700'
 
-    - name: Déposer la clé publique
+    - name: Deploy SSH public key
+      become: yes
       authorized_key:
-        user: guillaume
-        key: "{{ lookup('env', 'GCP_SSH_KEY') }}"
+        user: "{{ ssh_user }}"
+        key: "{{ ssh_public_key }}"
         state: present
+      when: ssh_public_key is defined
 
-- name: Install tools prerequisites on differents servers
+    - name: Configure sudo access
+      become: yes
+      copy:
+        content: '{{ ssh_user }} ALL=(ALL) NOPASSWD:ALL'
+        dest: "/etc/sudoers.d/{{ ssh_user }}"
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+
+# Installation Docker
+- name: Install Docker on all Swarm nodes
   hosts: 
-    - frontend
-    - backend
-    - database
-    - monitoring
-  gather_facts: no
+    - swarm_managers
+    - swarm_workers
   become: yes
   tasks:
-    - name: install rsync
-      ansible.builtin.package:
-        name: rsync
-        state: present
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
 
-    - name: Installer les dépendances pour Docker
+    - name: Install Docker prerequisites
       apt:
         name:
           - apt-transport-https
@@ -64,102 +63,205 @@
           - curl
           - gnupg
           - lsb-release
+          - python3-pip
+          - python3-docker
         state: present
-        update_cache: yes
 
-    - name: Créer le répertoire pour les clés GPG
-      file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
 
-    - name: Ajouter la clé GPG Docker pour Debian
-      shell: |
-        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-        chmod a+r /etc/apt/keyrings/docker.gpg
-      args:
-        creates: /etc/apt/keyrings/docker.gpg
-
-    - name: Ajouter le dépôt Docker pour Debian
+    - name: Add Docker repository
       apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+        repo: "deb https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
         state: present
-        filename: docker
-        update_cache: yes
 
-    - name: Installer Docker
+    - name: Install Docker
       apt:
         name:
           - docker-ce
           - docker-ce-cli
           - containerd.io
-          - docker-buildx-plugin
           - docker-compose-plugin
         state: present
-        update_cache: yes
 
-    - name: Démarrer et activer Docker
-      become: true
-      ansible.builtin.systemd:
+    - name: Start and enable Docker
+      systemd:
         name: docker
         state: started
-        enabled: true
+        enabled: yes
 
-    - name: Ajouter l'utilisateur guillaume au groupe docker
-      become: true
-      ansible.builtin.user:
-        name: guillaume
+    - name: Add user to docker group
+      user:
+        name: "{{ ssh_user }}"
         groups: docker
-        append: true
+        append: yes
 
-- name: Déployer le frontend
-  hosts: frontend
-  gather_facts: no
-  become: true
+    - name: Supprimer tous les containers qui exposent le port 3000 ou 5000 (host)
+      shell: |
+        for port in 3000 5000; do
+          for id in $(docker ps --filter "publish=${port}" --format '{{"{{.ID}}"}}'); do
+            docker rm -f "$id";
+          done
+        done
+      args:
+        executable: /bin/bash
+      become: true
+      ignore_errors: true
+
+# Configuration Docker Swarm
+- name: Setup Docker Swarm cluster
+  hosts: 
+    - swarm_managers
+    - swarm_workers
+  become: yes
   roles:
-    - frontend
-  vars_files:
-    - ../host_vars/frontend-vm.yml
-    - ../group_vars/all.yml
+    - docker_swarm
+  tags:
+    - swarm
 
-- name: Déployer le backend
-  hosts: backend
-  gather_facts: no
-  become: true
+# Configuration des backups
+- name: Setup MySQL backup
+  hosts: swarm_managers[0]
+  become: yes
   roles:
-    - backend
-  vars_files:
-    - ../group_vars/all.yml
-    - ../group_vars/vault.yml
-    - ../host_vars/backend-vm.yml
+    - mysql_backup
+  tags:
+    - mysql
 
-- name: Déployer la base de données
-  hosts: database
-  gather_facts: no
-  become: true
+# Installation monitoring
+- name: Install monitoring on all servers
+  hosts: all
+  become: yes
   roles:
-    - database
-  vars_files:
-    - ../group_vars/all.yml
-    - ../host_vars/database.yml
-    - ../group_vars/vault.yml
+    - node_exporter
+  tags:
+    - node_exporter
 
-- name: Déployer Prometheus & Grafana
-  hosts: monitoring
-  gather_facts: no
-  become: true
+# Setup monitoring configurations
+- name: Configure monitoring stack
+  hosts: swarm_managers[0]
+  become: yes
   roles:
     - monitoring
-  vars_files:
-    - ../host_vars/monitoring.yml
-    - ../group_vars/all.yml
+  tags:
+    - monitoring
 
-- name: Déployer le reverse proxy NGINX
-  hosts: reverse_proxy
-  gather_facts: no
-  become: true
+# Build application
+- name: create files on all Swarm nodes
+  hosts: swarm_nodes
+  become: yes
   roles:
-    - reverse-proxy
-  vars_files:
-    - ../group_vars/all.yml
+    - app_build
+  tags:
+    - build
 
+# gestion des images et versionning
+- name: Build & push frontend/backend images + generate tag
+  hosts: localhost
+  tasks:
+    - name: Connexion à Docker Hub
+      community.docker.docker_login:
+        username: "{{ docker_hub_username }}"
+        password: "{{ docker_hub_password }}"
+      no_log: true
+  
+    - name: Générer un tag unique pour l’image (timestamp)
+      set_fact:
+        deploy_version: "{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
+
+    - name: Sauver deploy_version pour les autres plays
+      copy:
+        dest: /tmp/deploy_version.txt
+        content: "{{ deploy_version }}"
+
+    - name: Build et push l'image Docker Backend
+      community.docker.docker_image:
+        build:
+          path: "{{ local_directory }}/backend"
+        name: guigan713/backend
+        tag: "{{ deploy_version }}"
+        push: true
+        source: build
+
+    - name: Build et push l'image Docker Frontend
+      community.docker.docker_image:
+        build:
+          path: "{{ local_directory }}/frontend"
+        name: guigan713/frontend
+        tag: "{{ deploy_version }}"
+        push: true
+        source: build
+
+- name: faire passer la variable deploy_version a un template
+  hosts: manager_1
+  tasks:
+    - name: Récupérer le deploy_version généré en local
+      delegate_to: localhost
+      slurp:
+        src: /tmp/deploy_version.txt
+      register: deploy_version_file
+
+    - name: Mettre deploy_version en variable de fait
+      set_fact:
+        deploy_version: "{{ deploy_version_file['content'] | b64decode | trim }}"
+
+    - name: Copier le fichier compose converti
+      template:
+        src: roles/app_build/templates/compose-swarm.yml.j2
+        dest: "{{ app_directory }}/compose-swarm.yml"
+        owner: "{{ ssh_user }}"
+        group: "{{ ssh_user }}"
+        mode: '0644'
+
+# Deploiement application
+- name: application deployment
+  hosts: swarm_managers[0]
+  become: yes
+  roles:
+    - app_deploy
+  tags: 
+    - deploy
+
+- name: Injecter les données dans MySQL après deploy
+  hosts: swarm_managers[0]
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Get the node name where the MySQL service is running
+      command: docker service ps --filter 'desired-state=running' --format '{{ "{{.Node}}" }}' projet-devops-gle_database
+      register: db_node_name
+
+    - name: Copie le script SQL sur le noeud porteur DB
+      copy:
+        src: "{{ local_directory }}/database/mysql/init/sneakerportfolio.sql"
+        dest: /tmp/sneakerportfolio.sql
+        owner: "{{ ssh_user }}"
+        group: "{{ ssh_user }}"
+        mode: '0644'
+      delegate_to: "{{ db_node_name.stdout }}"
+
+    - name: Trouve l'ID du container MySQL Swarm
+      shell: "docker ps --filter 'name={{ db_service_name }}' --format '{{ '{{.ID}}' }}'"
+      register: mysql_cont
+      delegate_to: "{{ db_node_name.stdout }}"
+      changed_when: false
+
+    - name: Injecte le SQL d'init dans la BDD
+      shell: |
+        docker exec -i {{ mysql_cont.stdout }} \
+          mysql -u{{ db_user }} -p'{{ vault_db_password }}' {{ db_name }} < /tmp/sneakerportfolio.sql
+      args:
+        executable: /bin/bash
+      environment:
+        MYSQL_PWD: "{{ vault_db_password }}"
+      delegate_to: "{{ db_node_name.stdout }}"
+
+- name: Configure DNS and SSL management
+  hosts: swarm_managers
+  become: yes
+  roles:
+    - role: dns_management
+      when: inventory_hostname == groups['swarm_managers'][0]
+  tags: dns

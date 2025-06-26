@@ -2,12 +2,15 @@ import React from 'react';
 
 import './WorkPage.css';
 
+// const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
+const API_URL = window._env_?.API_URL || "http://localhost:5000";
+
 function WorkPage({snap}) {
     return (
         <div className="workpage-container">
             <img
                 className="workpage-img"
-                src={`${process.env.REACT_APP_URL_API}/images/${snap.shoe_img}`}
+                src={`${API_URL}/images/${snap.shoe_img}`}
                 alt="pics"
             />
             <div className="workpage-item-info">

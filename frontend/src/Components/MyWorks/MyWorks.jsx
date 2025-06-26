@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-
 import './MyWorks.css'
+
+// const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
+const API_URL = window._env_?.API_URL || "http://localhost:5000";
 
 function MyWorks({ pic }) {
 
@@ -11,7 +13,7 @@ function MyWorks({ pic }) {
             <Link to="/mypics" className="myworks-item-img">
                 <img
                     className="works-img"
-                    src={`${process.env.REACT_APP_URL_API}/images/${pic.shoe_img}`}
+                    src={`${API_URL}/images/${pic.shoe_img}`}
                     alt="pics"
                 />
             </Link>

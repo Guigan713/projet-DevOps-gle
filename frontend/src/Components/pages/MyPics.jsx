@@ -4,13 +4,15 @@ import MyWorks from '../MyWorks/MyWorks'
 
 import './MyPics.css'
 
+// const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
+const API_URL = window._env_?.API_URL || "http://localhost:5000";
 
 function MyPics() {
     const [pics, setPics] = useState([]);
     useEffect(() => {
         const getPics = () => {
             axios
-            .get(`${process.env.REACT_APP_URL_API}/pics`)
+            .get(`${API_URL}/pics`)
             .then(res => setPics(res.data))
         }
         getPics()

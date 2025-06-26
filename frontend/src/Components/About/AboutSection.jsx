@@ -5,12 +5,15 @@ import { useState, useEffect } from 'react';
 
 import './AboutSection.css';
 
+// const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
+const API_URL = window._env_?.API_URL || "http://localhost:5000";
+
 function AboutSection() {
     const [about, setAbout] = useState([])
     useEffect(() => {
         const getAbout = () => {
             axios
-            .get(`${process.env.REACT_APP_URL_API}/about`)
+            .get(`${API_URL}/about`)
             .then(res => setAbout(res.data[0]))
         }
         getAbout()
@@ -38,7 +41,7 @@ function AboutSection() {
                 <div className="about-section-right">
                     <img 
                         className="about-img"
-                        src={`${process.env.REACT_APP_URL_API}/images/${about.about_img}`}
+                        src={`${API_URL}/images/${about.about_img}`}
                         alt="aboutpic"
                     />
                 </div>

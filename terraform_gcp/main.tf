@@ -9,49 +9,82 @@ terraform {
 }
 
 provider "google" {
-    credentials = file("credentials/gcp-sa-key.json")
-    project = var.project
-    region = var.region
-    zone = var.zone
+  credentials = file("credentials/gcp-sa-key.json")
+  project = var.project
+  region = var.region
+  zone = var.zone
 }
 
 module "instances" {
-    source = "./modules/instances"
-    project = var.project
-    image = var.image
-    private_subnet_id = module.network.private_subnet_id
-    public_subnet_id = module.network.public_subnet_id
-    vpc_id = module.network.vpc_id
-    region = var.region
-    ssh_public_key_path = var.ssh_public_key_path
+  source = "./modules/instances"
+
+  project = var.project
+  region  = var.region
+  zone    = var.zone
+  image   = var.image
+  
+  # Réseau
+  vpc_id            = module.network.vpc_id
+  public_subnet_id  = module.network.public_subnet_id
+  private_subnet_id = module.network.private_subnet_id
+  
+  # Configuration Swarm
+  swarm_manager_count  = var.swarm_manager_count
+  swarm_worker_count   = var.swarm_worker_count
+  manager_machine_type = var.manager_machine_type
+  worker_machine_type  = var.worker_machine_type
+  
+  # SSH
+  ssh_public_key_path = var.ssh_public_key_path
+  
+  depends_on = [module.network, module.security_groups]
 }
 
 module "network" {
-    source = "./modules/network"
-    project = var.project
-    private_subnet_cidr = var.private_subnet_cidr
-    public_subnet_cidr = var.public_subnet_cidr
-    vpc_cidr = var.vpc_cidr
-    # region = var.region
+  source = "./modules/network"
+  
+  project             = var.project
+  public_subnet_cidr  = var.public_subnet_cidr
+  private_subnet_cidr = var.private_subnet_cidr
+  region              = var.region
 }
 
 module "security_groups" {
   source = "./modules/security_groups"
-  vpc_id = module.network.vpc_id
-  mon_ip = var.mon_ip
-  vpc_name = module.network.vpc_name
+  
+  vpc_id              = module.network.vpc_id
+  vpc_name            = module.network.vpc_name
+  mon_ip              = var.mon_ip
+  public_subnet_cidr  = var.public_subnet_cidr
+  private_subnet_cidr = var.private_subnet_cidr
+  
+  depends_on = [module.network]
 }
+
 
 module "gcp_backup" {
   source = "./modules/gcp_backup"
-  project = var.project
+
+  project      = var.project
   project_name = var.project_name
-  location = var.location
+  location     = var.location
+  
+  # Options Swarm
+  storage_class         = var.storage_class
+  backup_retention_days = var.backup_retention_days
+  environment          = var.environment
 }
 
 module "dns" {
+  count  = var.enable_dns ? 1 : 0
   source = "./modules/dns"
-  project = var.project
+  
+  project     = var.project
   domain_name = var.domain_name
-  reverse_proxy_ip = module.instances.reverse_proxy_public_ip
+  
+  # Pointe vers le Load Balancer Swarm
+  swarm_lb_ip = module.instances.swarm_lb_ip
+  
+  # # sous-domaines
+  # create_admin_subdomain = var.create_admin_subdomain
 }

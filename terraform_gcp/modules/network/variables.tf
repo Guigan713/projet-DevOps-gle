@@ -9,12 +9,6 @@ variable "region" {
   default     = "europe-west1"
 }
 
-variable "vpc_cidr" {
-  description = "Le CIDR du réseau VPC"
-  type        = string
-  # default     = "10.0.0.0/16"
-}
-
 variable "public_subnet_cidr" {
   description = "Le CIDR du subnet public"
   type        = string

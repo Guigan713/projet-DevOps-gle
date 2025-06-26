@@ -12,13 +12,17 @@ import { useState, useEffect } from 'react';
 
 import './HomeSection.css'
 
+// const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
+const API_URL = window._env_?.API_URL || "http://localhost:5000";
+
 function HomeSection() {
+    console.log("HomeSection chargé !");
     const [, setPics] = useState([])
     const [home, setHome] = useState([])
     useEffect(() => {
         const getPics = () => {
             axios
-            .get(`${process.env.REACT_APP_URL_API}/pics`)
+            .get(`${API_URL}/pics`)
             .then(res => setPics(res.data))
         }
         getPics()
@@ -26,11 +30,22 @@ function HomeSection() {
     useEffect(() => {
         const getHome = () => {
             axios
-                .get(`${process.env.REACT_APP_URL_API}/home`)
-                .then(res => setHome(res.data[0]))
+                .get(`${API_URL}/home`)
+                // .then(res => setHome(res.data[0]))
+                .then(res => {
+                    if (res.data[0] && res.data[0].home_img) {
+                        setHome(res.data[0]);
+                    } else {
+                        setHome({ ...res.data[0], home_img: 'Guigan.jpg' }); // image par défaut
+                    }
+                });
         }
         getHome()
     },[])
+
+    console.log("API_URL=", API_URL)
+    console.log('home=', home);
+    console.log('home.home_img=', home.home_img);
 
     return (
         <div className="home-section">
@@ -41,9 +56,15 @@ function HomeSection() {
                         <span className="home-name">{home.gui_title}</span>
                     </h1>
                     <div className="home-img">
-                        <img src={`${process.env.REACT_APP_URL_API}/images/${home.home_img}`}
+                        {/* <img src={`${API_URL}/images/${home.home_img}`}
                         alt="homepic"
-                        />
+                        /> */}
+                        {home.home_img && (
+                            <img
+                                src={`${API_URL}/images/${home.home_img}`}
+                                alt="homepic"
+                            />
+                        )}
                     </div>
                     <div className="home-infos">
                         <p>

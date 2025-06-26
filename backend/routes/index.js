@@ -5,4 +5,4 @@ const aboutme = require('./aboutme')
 const snaps = require('./snaps')
 // const monitor = require('./monitor')
 
-module.exports = { pics, home, about, aboutme, snaps,  }
+module.exports = { pics, home, about, aboutme, snaps }

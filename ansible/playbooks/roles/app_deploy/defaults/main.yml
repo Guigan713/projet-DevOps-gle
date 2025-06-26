@@ -1,0 +1,8 @@
+# Services à vérifier après déploiement
+app_services:
+  - traefik
+  - frontend
+  - backend
+  - database
+  - prometheus
+  - grafana

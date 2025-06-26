@@ -1,5 +1,5 @@
-resource "google_compute_firewall" "reverse_proxy_ssh" {
-  name    = "reverse-proxy-ssh"
+resource "google_compute_firewall" "swarm_manager_ssh" {
+  name    = "swarm-manager-ssh"
   network = var.vpc_name
 
   allow {
@@ -7,14 +7,13 @@ resource "google_compute_firewall" "reverse_proxy_ssh" {
     ports    = ["22"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
-  # source_ranges = ["${var.mon_ip}/32"]
-  target_tags   = ["reverse-proxy"]
+  source_ranges = ["${var.mon_ip}/32"]
+  target_tags   = ["swarm-manager"]
 }
 
-# SSH from reverse proxy to internal services (bastion functionality)
-resource "google_compute_firewall" "reverse_proxy_to_internal_ssh" {
-  name    = "reverse-proxy-to-internal-ssh"
+# SSH from managers to all nodes (bastion)
+resource "google_compute_firewall" "swarm_internal_ssh" {
+  name    = "swarm-internal-ssh"
   network = var.vpc_name
 
   allow {
@@ -22,13 +21,61 @@ resource "google_compute_firewall" "reverse_proxy_to_internal_ssh" {
     ports    = ["22"]
   }
 
-  source_tags = ["reverse-proxy"]
-  target_tags = ["frontend", "backend", "database", "monitoring"]
+  source_tags = ["swarm-manager"]
+  target_tags = ["swarm-node"]
 }
 
-# HTTP, HTTPS
-resource "google_compute_firewall" "reverse_proxy_ingress" {
-  name    = "reverse-proxy-ingress"
+# Communication interne simplifiée
+resource "google_compute_firewall" "swarm_internal_communication" {
+  name    = "swarm-internal-communication"
+  network = var.vpc_name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["2377", "7946"]
+  }
+  
+  allow {
+    protocol = "udp"
+    ports    = ["4789", "7946"]
+  }
+  
+  allow {
+    protocol = "icmp"
+  }
+
+  source_ranges = [
+    var.public_subnet_cidr,
+    var.private_subnet_cidr
+  ]
+  target_tags = ["swarm-node"]
+}
+
+# Ports spécifiques Docker Swarm
+resource "google_compute_firewall" "swarm_cluster_ports" {
+  name    = "swarm-cluster-ports"
+  network = var.vpc_name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["2377", "7946"]  # Cluster management + node communication
+  }
+  
+  allow {
+    protocol = "udp"
+    ports    = ["4789", "7946"]  # Overlay network + node communication
+  }
+
+  source_ranges = [
+    var.public_subnet_cidr,
+    var.private_subnet_cidr
+  ]
+  target_tags = ["swarm-node"]
+}
+
+# HTTP/HTTPS externe
+resource "google_compute_firewall" "swarm_web_ingress" {
+  name    = "swarm-web-ingress"
   network = var.vpc_name
 
   allow {
@@ -37,194 +84,26 @@ resource "google_compute_firewall" "reverse_proxy_ingress" {
   }
 
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["reverse-proxy"]
+  target_tags   = ["swarm-manager"]  # Load balancer sur managers
 }
 
-# Firewall rule for frontend (private subnet)
-# resource "google_compute_firewall" "frontend_ssh" {
-#   name    = "frontend-ssh"
-#   network = var.vpc_name
-
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["22"]
-#   }
-
-#   source_ranges = ["${var.mon_ip}/32"]
-#   target_tags   = ["frontend"]
-# }
-
-# resource "google_compute_firewall" "backend_ssh" {
-#   name    = "backend-ssh"
-#   network = var.vpc_name
-
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["22"]
-#   }
-
-#   source_ranges = ["${var.mon_ip}/32"]
-#   target_tags   = ["backend"]
-# }
-
-# resource "google_compute_firewall" "database_ssh" {
-#   name    = "database-ssh"
-#   network = var.vpc_name
-
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["22"]
-#   }
-
-#   source_ranges = ["${var.mon_ip}/32"]
-#   target_tags   = ["database"]
-# }
-
-# resource "google_compute_firewall" "monitoring_ssh" {
-#   name    = "monitoring-ssh"
-#   network = var.vpc_name
-
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["22"]
-#   }
-
-#   source_ranges = ["${var.mon_ip}/32"]
-#   target_tags   = ["monitoring"]
-# }
-
-resource "google_compute_firewall" "monitoring_services" {
-  name    = "monitoring-services"
+# Monitoring accès externe (Grafana, Prometheus via Swarm)
+resource "google_compute_firewall" "swarm_monitoring" {
+  name    = "swarm-monitoring"
   network = var.vpc_name
 
   allow {
     protocol = "tcp"
-    ports    = ["3000", "9090", "9000"]  # Grafana et Prometheus
+    ports    = ["3000", "9090", "9093"]  # Grafana, Prometheus, Alertmanager
   }
 
   source_ranges = ["${var.mon_ip}/32"]
-  target_tags   = ["monitoring"]
+  target_tags   = ["swarm-manager"]
 }
 
-# Communication rules between services
-
-# Reverse proxy to frontend
-resource "google_compute_firewall" "reverse_proxy_to_frontend" {
-  name    = "reverse-proxy-to-frontend"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["3000"]
-  }
-
-  source_tags = ["reverse-proxy"]
-  target_tags = ["frontend"]
-}
-
-# Frontend to backend
-resource "google_compute_firewall" "frontend_to_backend" {
-  name    = "frontend-to-backend"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["5000"]
-  }
-
-  source_tags = ["frontend"]
-  target_tags = ["backend"]
-}
-
-# Backend to database
-resource "google_compute_firewall" "backend_to_database" {
-  name    = "backend-to-database"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["3306"]
-  }
-
-  source_tags = ["backend"]
-  target_tags = ["database"]
-}
-
-# Admin access to database
-resource "google_compute_firewall" "admin_to_database" {
-  name    = "admin-to-database"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["3306"]
-  }
-
-  source_ranges = ["${var.mon_ip}/32"]
-  target_tags   = ["database"]
-}
-
-# Monitoring rules
-
-# Monitoring to all services (Node Exporter)
-resource "google_compute_firewall" "monitoring_to_services_node_exporter" {
-  name    = "monitoring-to-services-node-exporter"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["9100"]
-  }
-
-  source_tags = ["monitoring"]
-  target_tags = ["reverse-proxy", "frontend", "backend", "database"]
-}
-
-# Monitoring to database (MySQL exporter)
-resource "google_compute_firewall" "monitoring_to_database_mysql_exporter" {
-  name    = "monitoring-to-database-mysql-exporter"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["9104"]
-  }
-
-  source_tags = ["monitoring"]
-  target_tags = ["database"]
-}
-
-# Reverse proxy to monitoring (Grafana)
-resource "google_compute_firewall" "reverse_proxy_to_grafana" {
-  name    = "reverse-proxy-to-grafana"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["3000"]
-  }
-
-  source_tags = ["reverse-proxy"]
-  target_tags = ["monitoring"]
-}
-
-# Reverse proxy to monitoring (Prometheus - only if debug needed)
-resource "google_compute_firewall" "reverse_proxy_to_prometheus" {
-  name    = "reverse-proxy-to-prometheus"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["9090"]
-  }
-
-  source_tags = ["reverse-proxy"]
-  target_tags = ["monitoring"]
-}
-
-# Egress rules 
-resource "google_compute_firewall" "allow_outbound" {
-  name      = "allow-outbound"
+# Egress
+resource "google_compute_firewall" "swarm_outbound" {
+  name      = "swarm-outbound"
   network   = var.vpc_name
   direction = "EGRESS"
 
@@ -233,5 +112,5 @@ resource "google_compute_firewall" "allow_outbound" {
   }
 
   destination_ranges = ["0.0.0.0/0"]
-  target_tags       = ["reverse-proxy", "frontend", "backend", "monitoring"]
+  target_tags       = ["swarm-node"]
 }

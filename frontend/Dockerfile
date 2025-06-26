@@ -1,8 +1,11 @@
-# Définit l'image de base Node.js version 23 (légère) et nomme ce stage "base"
-FROM node:23-slim AS base
+# Définit l'image de base Node.js version 23 (légère) et nomme ce stage "build"
+FROM node:23-slim AS build
 
 # Définit le répertoire de travail à /app dans le conteneur
 WORKDIR /app
+
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
 
 # Copier et installer les dépendances -> # Copie les fichiers package.json et package-lock.json dans le conteneur
 COPY package*.json ./
@@ -10,44 +13,26 @@ COPY package*.json ./
 # Installe toutes les dépendances Node.js définies dans package.json
 RUN npm install
 
-# Stage de développement -> Crée un nouveau stage "development" basé sur le stage "base"
-FROM base AS development
-
 # Copie tous les fichiers du projet dans le conteneur
 COPY . .
 
-# Copie spécifiquement le fichier d'environnement .env
-COPY .env .env
-
-# Expose le port 3000 pour l'accès externe
-EXPOSE 3000
-
-# Commande par défaut : lance le serveur de développement
-CMD ["npm", "run", "dev"]
-
-# Crée un nouveau stage "build" basé sur le stage "base"
-FROM base AS build
-
-# Copie tous les fichiers du projet dans ce stage
-COPY . .
-
-# Exécute la commande de build pour créer les fichiers de production
 RUN npm run build
 
-# Stage de production avec Nginx -> # Crée le stage final "production" avec une image Nginx légère (Alpine)
+RUN echo "window._env_ = { API_URL: 'https://projet-devops-gle.fr/api' };" > build/env.js
+
+# Crée un nouveau stage "production" basé sur le stage "build"
 FROM nginx:alpine AS production
 
-# Copie les fichiers buildés du stage "build" vers le répertoire web de Nginx
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Copie la configuration Nginx personnalisée
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Définit les permissions de lecture/exécution sur les fichiers web
-RUN chmod -R 755 /usr/share/nginx/html
+# # Installer 'serve' globalement pour servir la build statique
+# RUN npm install -g serve && apt update && apt install -y curl && rm -rf /var/lib/apt/lists/
 
-# Expose le port 80 pour l'accès HTTP
-EXPOSE 80
+# Copier uniquement le build final, package.json et le lock
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Lance Nginx en mode foreground (non-daemon) pour Docker
+
+EXPOSE 7000
+
+# CMD ["serve", "-s", "build", "-l", "3000"]
 CMD ["nginx", "-g", "daemon off;"]

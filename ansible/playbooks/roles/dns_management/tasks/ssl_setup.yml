@@ -1,0 +1,79 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible-community/schemas/main/f/ansible-tasks.json
+---
+- name: Install Certbot with Google Cloud DNS plugin
+  package:
+    name:
+      - certbot
+      - python3-certbot-dns-google
+    state: present
+  become: true
+
+- name: Create SSL certificates directory
+  file:
+    path: /opt/ssl-certificates
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Generate SSL certificate for main domain
+  shell: |
+    certbot certonly \
+      --dns-google \
+      --dns-google-credentials /opt/gcp-service-account.json \
+      --dns-google-propagation-seconds 120 \
+      -d {{ domain_name }} \
+      --email {{ ssl_email }} \
+      --agree-tos \
+      --non-interactive \
+      --force-renewal
+  become: true
+  register: main_domain_ssl
+
+- name: Generate SSL certificates for each service domain
+  shell: |
+    certbot certonly \
+      --dns-google \
+      --dns-google-credentials /opt/gcp-service-account.json \
+      --dns-google-propagation-seconds 120 \
+      -d {{ item.domain }} \
+      --email {{ ssl_email }} \
+      --agree-tos \
+      --non-interactive
+  loop: "{{ dns_services }}"
+  when: item.enabled
+  become: true
+  register: services_ssl
+
+- name: Generate wildcard SSL certificate for *.projet-devops-gle.fr
+  shell: |
+    certbot certonly \
+      --dns-google \
+      --dns-google-credentials /opt/gcp-service-account.json \
+      --dns-google-propagation-seconds 120 \
+      -d *.{{ domain_name }} \
+      --email {{ ssl_email }} \
+      --agree-tos \
+      --non-interactive
+  become: true
+  register: wildcard_ssl
+
+- name: Setup SSL certificate renewal cron job
+  cron:
+    name: "SSL Certificate Renewal for projet-devops-gle.fr"
+    minute: "0"
+    hour: "2"
+    day: "*/15"
+    job: "certbot renew --quiet --deploy-hook 'docker service update traefik_traefik --force'"
+    user: root
+  become: true
+
+- name: Display SSL certificate generation results
+  debug:
+    msg: |
+      SSL Certificates generated for:
+      - Main domain: {{ domain_name }}
+      - Traefik: {{ traefik_domain }}  
+      - Grafana: {{ grafana_domain }}
+      - Prometheus: {{ prometheus_domain }}
+      - API: {{ api_domain }}
+      - Wildcard: *.{{ domain_name }}

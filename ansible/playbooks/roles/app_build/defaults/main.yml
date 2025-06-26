@@ -1,0 +1,36 @@
+# Services à vérifier après déploiement
+app_services:
+  - traefik
+  - frontend
+  - backend
+  - database
+  - prometheus
+  - grafana
+
+project_name: "projet-devops-gle"
+app_directory: "/opt/{{ app_name }}"
+app_name: "{{ project_name }}"
+
+gcp_credentials_file: "/home/guillaume/projet-DevOps-gle/terraform_gcp/credentials/gcp-sa-key.json"
+gcp_swarm_sa_json: "{{ app_directory }}/gcp-service-account.json"
+
+frontend_port: 7000
+backend_port: 5000
+frontend_replicas: 2
+backend_replicas: 2
+
+db_name: "sneakerportfolio"
+db_user: "guillaume"
+db_host: "database"
+db_port: "3306"
+
+grafana_domain: "grafana.{{ domain_name }}"
+prometheus_domain: "prometheus.{{ domain_name }}"
+grafana_admin_user: "admin"
+prometheus_retention_time: "15d"
+
+domain_name: "projet-devops-gle.fr"
+app_environment: production
+app_version: "v1.0.0"
+
+api_rate_limit: 60

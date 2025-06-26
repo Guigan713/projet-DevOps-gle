@@ -18,3 +18,15 @@ variable "storage_class" {
   type        = string
   default     = "STANDARD"
 }
+
+variable "environment" {
+  description = "Environnement (dev/staging/prod)"
+  type        = string
+  default     = "prod"
+}
+
+variable "backup_retention_days" {
+  description = "Nombre de jours de rétention des backups"
+  type        = number
+  default     = 30
+}

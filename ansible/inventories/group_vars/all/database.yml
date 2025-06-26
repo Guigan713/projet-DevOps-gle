@@ -1,0 +1,15 @@
+db_name: "sneakerportfolio"
+db_user: "guillaume"
+db_host: "database"
+db_port: "3306"
+db_service_name: "projet-devops-gle_database"
+
+backend_port: 5000
+frontend_port: 7000
+
+db_data_volume: "{{ project_name }}_db_data"
+db_backup_volume: "{{ project_name }}_db_backup"
+
+db_backup_enabled: true
+db_backup_schedule: "0 2 * * *"  # Daily at 2 AM
+db_backup_retention_days: 7

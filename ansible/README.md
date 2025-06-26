@@ -1,311 +1,306 @@
-# Déploiement d'une stack applicative avec Ansible
+# Déploiement complet d’une infrastructure Docker Swarm avec Ansible
 
-## Introduction
-
-Ce projet Ansible permet d'automatiser le déploiement complet d'une stack applicative comprenant :
+Ce playbook Ansible orchestre le provisionnement et le déploiement d’une infrastructure Docker Swarm autoscalée, incluant la création/utilisation d’utilisateurs SSH, l’installation Docker, la configuration Swarm, le monitoring, la sauvegarde MySQL et le déploiement applicatif (frontend, backend).
 
 > [!NOTE]
-> - Un backend
-> - Un frontend
-> - Une base de données
-> - Un reverse proxy NGINX
-> - Un système de monitoring avec Prometheus & Grafana
-> - L'export de métriques via node_exporter sur tous les serveurs
+> - Gestion centralisée des utilisateurs SSH et accès sudo
+> - Installation complète de Docker et ses dépendances
+> - Provisioning du cluster Docker Swarm (manager/workers)
+> - Sauvegarde automatisée de la base MySQL
+> - Mise en place d’un monitoring multi-nœuds (Node Exporter, Prometheus, Grafana)
+> - Build et push d’images front/back personnalisées avec tags dynamiques
+> - Déploiement applicatif (stack Swarm)
+> - Injection automatisée de données SQL initiales
+> - Configuration DNS & SSL (Let’s Encrypt ou autres)
+
+L’ensemble est orchestré via un playbook structuré et des rôles réutilisables.
 
 ## Prérequis
 
-> [!NOTE]
 > - Ansible >= 2.9
-> - Configuration de l'inventaire automatisé par un script (**generate_hosts.sh**) lors du lancement de l'infrastructure terraform
-> - Accès SSH avec privilèges sudo sur toutes les machines
+> - Un inventaire compatible (fichier INI dynamique auto-généré après terraform)
+> - Une clé SSH publique prête à être injectée (via la variable ssh_public_key)
+> - Docker Hub accessible et credentials
+> - Variables principales définies dans group_vars/all.yml (voir section dédiée)
 
 ## Déclenchement
 
-Le déclenchement intervient de 2 façons:
+### Automatique
 
-> [!NOTE]
-> - au déclenchemet du workflow GitHub Actions build-deploy.yml
-> - Déclenchement manuel:
+> - Via GitHub Actions CI/CD, par exemple à chaque merge/push sur main
+Déclenche le workflow build-deploy-gcp.yml
+
+### Manuel
+
 ```bash
 cd ansible
-ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml --private-key ../gle-key.pem
+ansible-playbook -i inventories/hosts.ini playbooks/playbook.yml --private-key ../chemin-vers-ta-cle.pem
 ```
 
+## Structure du playbook principal
 
-## Structure de playbook.yml
+Chaque section correspond à un ensemble logique de tâches ou à l’exécution d’un rôle :
 
-#### 1. Collecte des facts système
+### 1. Collecte des facts et informations système
 
-> [!NOTE]
-> - Collecte les informations système de tous les serveurs pour initialiser les variables Ansible nécessaires au déploiement
-> - Affiche l'adresse IP de chaque serveur pour validation de l'inventaire
+> - Récupère les informations système de chaque hôte du cluster
+> - Vérifie la connectivité et la cohérence de l’inventaire
 
-#### 2. Déploiement de node_exporter
+```yml
+- name: Gather facts from all servers
+  hosts: all
+  gather_facts: yes
+  ...
+```
 
-> [!NOTE]
+### 2. Configuration utilisateur SSH
 
-> - Déploiement de node_exporter sur tous les serveurs pour collecter les métriques système
-> - Utilise le rôle dédié avec les variables de configuration des fichiers host_vars, group_vars et defaults
+> - Crée/modifie l’utilisateur {{ ssh_user }}
+> - Provisionne la clé publique d’accès SSH
+> - Accorde les droits sudo sans mot de passe
+> - Prépare l’environnement .ssh avec les bonnes permissions
 
-#### 3. Configuration utilisateur système
+### 3. Installation des prérequis Docker
 
-> [!NOTE]
+> - Installation des dépendances système nécessaires pour Docker
+> - Ajout du dépôt officiel Docker / GPG key
+> - Installation de Docker CE, Docker Compose et Python Docker SDK
+> - Démarrage et activation du service Docker
+> - Ajout de l’utilisateur {{ ssh_user }} au groupe docker
 
-> - Création de l'utilisateur "" sur tous les serveurs
-> - Configuration du répertoire SSH avec les permissions appropriées (700)
-> - Déploiement de la clé SSH publique depuis la variable d'environnement GCP_SSH_KEY
+### 4. Initialisation du cluster Docker Swarm
 
-#### 4. Installation des prérequis système
+> - Provisionne le cluster :
+>    - Exécution sur le groupe swarm_managers et swarm_workers
+>    - Les tâches d’initialisation, prise de token, join cluster, etc. sont gérées par le rôle docker_swarm
 
-> [!NOTE]
+### 5. Configuration des backups MySQL
 
-> - Installation de rsync pour la synchronisation de fichiers
-> - Mise à jour du cache des paquets APT avec validation temporaire (1h)
-> - Installation des dépendances système essentielles : apt-transport-https, ca-certificates, curl, gnupg, lsb-release
+> - Déploiement d’un mécanisme automatisé de sauvegarde MySQL
+> - Exécuté uniquement sur le premier manager (swarm_managers[0])
+> - Piloté via le rôle mysql_backup
 
-#### 5. Installation de Docker et Docker Compose
+### 6. Build des fichiers l’application
 
-> [!NOTE]
+> - Création des dossiers qui accueilleront la configuration de docker swarm
 
-> - Installation des paquets docker.io et docker-compose via APT
-> - Configuration du service Docker pour démarrage automatique
-> - Ajout de l'utilisateur guillaume au groupe docker pour les permissions de conteneurisation
+### 7. Gestion des images Docker et versionning applicatif
 
+> - Build/push des images Docker localement
+> - passage de la variable de version à la suite 
+> - génération du fichier Compose 
 
-#### 6. node_exporter
+### 8. déploiement
+> - déploiement de la stack Swarm via le rôle app_deploy.
 
-> [!NOTE]
-> - Déploiement de **node_exporter** sur tous les serveurs pour collecter les métriques système
+### 9. Injection SQL post-déploiement
 
-#### 7. frontend
+> - Injection automatique des premières données applicatives dans MySQL.
 
-> [!NOTE]
-> - Déploiement de l’application frontend sur les hôtes du groupe frontend.
+### 10. Installation monitoring simple (Node Exporter)
 
-#### 8. backend
+> - Déploiement de Node Exporter sur tous les serveurs avec gestion de l’utilisateur dédié, permissions, etc.
+> - Le rôle node_exporter s’occupe du cycle de vie complet (install, service, vérification)
 
-> [!NOTE]
-> - Déploiement de l’application backend sur les hôtes du groupe backend.
+### 11. Déploiement de la stack de monitoring complète
 
-#### 9. database
+> - Déployée sur le manager principal (swarm_managers[0])
+> - Utilise le rôle monitoring (Prometheus, Grafana, dashboards…)
 
-> [!NOTE]
-> - Déploiement et configuration de la base de données sur les hôtes du groupe database.
+### 12. Gestion DNS & SSL
 
-#### 10. Monitoring
+> - Rôle dédié sur le leader pour gestion automatisée (DNS, certificats SSL/LetsEncrypt...).
 
-> [!NOTE]
-> - Déploiement de Prometheus et Grafana sur les hôtes du groupe monitoring pour la surveillance et la visualisation des métriques.
 
-#### 11. reverse-proxy (NGINX)
+## Arborescence du projet
 
-> [!NOTE]
-> - Mise en place d’un reverse proxy NGINX sur les hôtes du groupe reverse_proxy pour centraliser et sécuriser l’accès aux différents composants de la stack.
+├── ansible.cfg
+├── files
+│   └── gcp-ssh-key.pub
+├── inventories
+│   ├── group_vars
+│   │   └── all
+│   └── swarm-hosts.ini
+├── playbooks
+│   ├── check_vars.yml
+│   ├── playbook.yml
+│   └── roles
+│       ├── app_build
+│       ├── app_deploy
+│       ├── dns_management
+│       ├── docker_swarm
+│       ├── monitoring
+│       ├── mysql_backup
+│       └── node_exporter
+├── README.md
+├── ssh-config
 
+## Détail des rôles principaux
 
+### Rôle : docker_swarm
 
-## Rôle backend
+> - Initialise le cluster Swarm
+> - Gère l’adhésion des workers et managers
+> - Modulaire et idempotent
+
+### Rôle : mysql_backup
+
+> - Installe les outils de backup MySQL (dump, script)
+> - Déploie/crée un cron pour l’exécution récurrente et la gestion des logs
+
+### Rôle : monitoring
+
+> - Mise en place de l’environnement Prometheus + Grafana (config + docker-compose)
+> - Gestion des variables et dashboards
+
+### Rôle : node_exporter
+
+> - Installation binaire
+> - Création de l’utilisateur et group dédiés
+> - Déploiement service systemd et vérification de l’endpoint
+
+### Rôle : app_build
 
-Ce rôle Ansible permet d’automatiser l’installation de Docker et Docker Compose, la création d’un répertoire de backend, la copie des fichiers nécessaires et le démarrage des services à l’aide de docker-compose sur le serveur backend de notre infrastructure
+> - crée les différents dossiers importants de la configuration
+
+### Section Images et versionning
+
+> - Authentification à Docker Hub avec des credentials sécurisés
+> - Génération automatique d’un tag unique pour chaque build (deploy_version) basé sur un horodatage
+> - Build et push distincts des images backend et frontend depuis le répertoire local vers Docker Hub, avec le tag correspondant
+> - Partage de la variable deploy_version entre la machine de build (localhost) et le manager Swarm :
+>    - Stockage temporaire du tag dans /tmp/deploy_version.txt
+>    - Rapatriement sur le manager principal pour utilisation dans les templates
+> - Injection dynamique du tag/version dans le template de déploiement (compose-swarm.yml), garantissant que seules les images fraichement construites/taguées soient déployées sur le cluster
+
+### Rôle : app_deploy
+
+> - Déploie, configure et lance votre application (frontend, backend)
+> - Prend en charge le lancement en swarm stack ou via Compose selon config
+
+### Section Injection SQL
+
+> - Détection dynamique du nœud porteur du service DB. Utilise docker service ps pour identifier le nœud Swarm (manager ou worker) sur lequel tourne le container MySQL
+> - Transfert contextuel du script SQL:
+>    - Le fichier SQL à injecter est copié en direct sur le bon hôte, grâce à la délégation (delegate_to).
+>    - Sécurité des droits : propriété et permissions adéquates.
+> - Sélection du container cible, Recherche l’ID du container MySQL réel (pour Docker Swarm, le nom de l’instance varie dynamiquement)
+> - Injection automatisée des données:
+>    - Exécution du script dans le container via docker exec, respectant le mot de passe stocké dans les variables Vault.
+>    - Injection robuste (résiste aux titulaires dynamiques de services Swarm).
+
+### Rôle : dns_management 
+
+> - configuration DNS, SSL, letsencrypt.
+
+## Variables globales principales
+
+## Variables à retrouver dans group_vars/all.yml (extrait) :
+
+```yml
+# Application & Infra
+project_name: "projet-devops-gle"
+app_version: "v1.0.0"
+app_environment: production
+app_directory: "/opt/{{ project_name }}"
+docker_data_dir: "/var/lib/docker"
 
-### Liste des tasks
+# Utilisateurs SSH
+ssh_user: "deploy"
+ssh_port: 22
+ssh_public_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/gcp-ssh-key.pub') }}"
 
-#### 1. Création du dossier backend
+# DNS & Domaines
+domain_name: "projet-devops-gle.fr"
+api_domain: "api.{{ domain_name }}"
+grafana_domain: "grafana.{{ domain_name }}"
+prometheus_domain: "prometheus.{{ domain_name }}"
+traefik_domain: "traefik.{{ domain_name }}"
 
-> [!NOTE]
-> - Crée le dossier /home/ubuntu/backend avec les bons droits pour l’utilisateur ubuntu.
+# Répertoires (projet, build, volumes, logs)
+project_root: /home/guillaume/projet-DevOps-gle
+app_build_dir: "{{ app_directory }}/build"
+app_volumes_dir: "{{ app_directory }}/volumes"
+app_config_dir: "{{ app_directory }}/config"
+app_logs_dir: "{{ app_directory }}/logs"
 
-#### 2. Copie des fichiers backend
+# Backend & DB
+db_name: "sneakerportfolio"
+db_user: "guillaume"
+db_host: "database"
+db_port: "3306"
 
-> [!NOTE]
-> - Copie l’intégralité du dossier local backend (contenant le Dockerfile et le fichier docker-compose.yml) dans le dossier /home/ubuntu/backend sur la machine distante.
+# Volumes Docker
+prometheus_data_volume: "{{ project_name }}_prometheus_data"
+grafana_data_volume: "{{ project_name }}_grafana_data"
+traefik_data_volume: "{{ project_name }}_traefik_data"
+app_uploads_volume: "{{ project_name }}_uploads"
+app_static_volume: "{{ project_name }}_static"
+app_media_volume: "{{ project_name }}_media"
 
-#### 3. Lancement du service avec Compose
+# Traefik
+traefik_version: "v3.0"
+traefik_dashboard_port: 8080
+traefik_dashboard_enabled: true
+traefik_api_dashboard: true
+traefik_api_debug: false
 
-> [!NOTE]
-> - Exécute `docker-compose up -d` depuis le dossier /home/ubuntu/backend pour démarrer les services en arrière-plan.
+# SSL/TLS
+ssl_enabled: false
+ssl_provider: "letsencrypt"
+ssl_email: "admin@projet-devops-gle.fr"
+```
 
+Toutes ces variables sont centralisées pour piloter le comportement du cluster, des services Docker et des tâches Ansible selon l’environnement et les besoins métier.
+Modèle d’inventaire
 
-## Rôle database
+## Exemple de fichier inventories/hosts.ini (bastion inclus, proxy SSH) :
 
-### Liste des tasks
+```ini
+# ===== INVENTAIRE DOCKER SWARM =====
 
-#### 1. Création du répertoire Database
+# Variables globales
+[all:vars]
+ansible_user=deploy
+ansible_ssh_private_key_file=/home/guillaume/.ssh/gcp-ssh-key
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4"
 
-> [!NOTE]
-> - Création du dossier /home/ubuntu/database appartenant à l’utilisateur ubuntu.
+# ===== MANAGERS =====
+[swarm_managers]
+manager_1 ansible_host=10.0.1.4 swarm_role=manager swarm_leader=true public_ip=34.140.50.4
+manager_2 ansible_host=10.0.1.3 swarm_role=manager swarm_leader=false ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4'
+manager_3 ansible_host=10.0.1.2 swarm_role=manager swarm_leader=false ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4'
 
-#### 2. Copie des fichiers du service MySQL
+# ===== WORKERS =====
+[swarm_workers]
+worker_1 ansible_host=10.0.2.2 swarm_role=worker ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4'
+worker_2 ansible_host=10.0.2.3 swarm_role=worker ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4'
 
-> [!NOTE]
-> - Copie tout le contenu local du dossier database vers /home/ubuntu/database sur la machine cible.
+# ===== GROUPES =====
+[swarm_cluster:children]
+swarm_managers
+swarm_workers
 
-#### 3. Démarrage des services via Compose
+[swarm_nodes:children]
+swarm_managers
+swarm_workers
 
-> [!NOTE]
-> - Exécution de `docker-compose up -d` dans ce dossier pour démarrer les conteneurs MySQL (et éventuellement d’autres services définis dans le compose).
+[swarm_deploy]
+manager_1
 
-#### 4. Déploiement du script de sauvegarde
+[bastion]
+swarm_bastion ansible_host=34.140.50.4 private_ip=10.0.1.4 lb_ip=34.140.50.4 ansible_ssh_common_args='' swarm_role=bastion
+```
 
-> [!NOTE]
-> - Copie du script mysql_backup.sh (stocké dans /templates) dans /usr/local/bin/, avec les droits d’exécution (0700).
+> [NOTE] 
 
-#### 5. Planification des sauvegardes automatiques
+> - Utilisation d’un proxy jump (bastion) pour l’accès aux nœuds privés
+> - Rôle précis de chaque serveur (swarm_role, swarm_leader)
+> - Possibilité de filtrer/target à l’exécution via les groupes
 
-> [!NOTE]
-> - Ajout d’une tâche cron exécutant chaque jour à 2h du matin le script de backup, avec log des sorties dans /var/log/mysql_backup.log.
+### Vérification post-déploiement
 
+À la fin de l’exécution, le playbook vérifie que tous les services Docker Swarm critiques (Traefik, frontend, backend, database, Prometheus, Grafana…) sont bien créés et actifs sur le(s) manager(s) principaux.  
+Des logs explicites « Service <nom> exists » confirment leur présence.
 
-
-## Rôle frontend
-
-Ce rôle Ansible permet d’automatiser l’installation de Docker et Docker Compose, la création d’un répertoire de frontend, la copie des fichiers nécessaires et le démarrage des services à l’aide de docker-compose sur le serveur frontend de notre infrastructure
-
-### Liste des tasks
-
-#### 1. Création du dossier frontend
-
-> [!NOTE]
-> - Crée le dossier /home/ubuntu/frontend avec les bons droits pour l’utilisateur ubuntu.
-
-#### 2. Copie des fichiers frontend
-
-> [!NOTE]
-> - Copie l’intégralité du dossier local frontend (contenant le Dockerfile et le fichier docker-compose.yml) dans le dossier /home/ubuntu/frontend sur la machine distante.
-
-#### 3. Lancement du service avec Compose
-
-> [!NOTE]
-> - Exécute `docker-compose up -d` depuis le dossier /home/ubuntu/frontend pour démarrer les services en arrière-plan.
-
-
-
-## Rôle monitoring
-
-Ce rôle Ansible permet d’installer Docker et Docker Compose, de préparer l’environnement de monitoring, de transférer les fichiers de configuration nécessaires, puis de lancer la stack Prometheus et Grafana via docker-compose.
-
-### Liste des tasks
-
-#### 1. Création du dossier de monitoring
-
-> [!NOTE]
-> - Crée /home/ubuntu/monitoring avec les droits appropriés (utilisateur et groupe : ubuntu).
-
-#### 2. Copie des fichiers de configuration de monitoring
-
-> [!NOTE]
-> - Copie l’ensemble du dossier local monitoring (contenant notamment docker-compose.yml et prometheus.yml) vers /home/ubuntu/monitoring sur la machine distante
-
-#### 3. Déploiement de la stack de monitoring via Docker Compose
-
-> [!NOTE]
-> - Exécute la commande `docker-compose up -d` dans /home/ubuntu/monitoring pour lancer les conteneurs Prometheus et Grafana (ou tout autre outil de monitoring défini dans le docker-compose.yml).
-
-
-## Rôle node_exporter
-
-Ce rôle Ansible automatise l’installation, la configuration, et la gestion du service Prometheus Node Exporter sur un serveur Linux, y compris la gestion d’utilisateur système dédié, la création de dossiers, le déploiement binaire, l’intégration systemd, et une vérification de bon fonctionnement.
-
-### Liste des tasks
-
-#### 1. Création d’un groupe système dédié
-
-> [!NODE]
-> - Crée le groupe Unix pour node_exporter, si absent.
-
-#### 2. Création de l’utilisateur système node_exporter
-
-> [!NODE]
-> - Utilisateur système sans shell pour faire tourner node_exporter de façon sécurisée.
-
-#### 3. Création des dossiers nécessaires
-
-> [!NOTE]    
-> - Création des répertoires de configuration (node_exporter_config_dir) et d’export textuel de métriques (node_exporter_textfile_dir) avec les bons droits.
-
-#### 4. Vérification de l’existence et de la version de node_exporter
-
-> [!NOTE]
-> - Check si node_exporter est déjà présent et à la bonne version, pour éviter une réinstallation inutile.
-
-#### 5. Téléchargement et extraction de node_exporter
-
-> [!NOTE]
-> - Si absent ou de mauvaise version, télécharge l’archive officielle, extrait et positionne le binaire à l’emplacement voulu.
-
-#### 6. Déploiement du binaire
-
-> [!NOTE]
-> - Copie le binaire dans le dossier cible avec les bons droits.
-
-#### 7. Nettoyage
-
-> [!NOTE]
-> - Supprime l’archive/dossier temporaire d’installation.
-
-#### 8. Déploiement du service systemd
-    
-> [!NOTE]
-> - Installe le service à partir d’un template et (re)charge systemd.
-
-#### 9. Démarrage & enable du service
-    
-> [!NOTE]
-> - Démarre node_exporter au boot et s’assure qu’il tourne.
-
-#### 10. Vérification du fonctionnement
-    
-> [!NOTE]   
-> - Tente d’accéder en HTTP local au port du service pour s’assurer qu’il répond.
-
-#### 11. Message de status
-
-> [!NOTE]
-> - Affiche un message clair lorsque node_exporter tourne correctement.
-
-### Items du rôle
-
-> [!NOTE]
-> - defaults/main.yml : variables par défaut nécessaires au fonctionnement du rôle
-> - handlers/main.yml : ces handlers permettent de recharger la configuration **systemd** et de redémarrer le service **node_exporter**. 
-> - templates/node_exporter.service.j2 : template systemd utilisé avec Ansible pour déployer et gérer le service Prometheus Node Exporter sur un serveur Linux. Il exploite les variables du playbook pour configurer dynamiquement le service en fonction de nos besoins de supervision.
-
-
-## Rôle reverse-proxy
-
-Ce rôle Ansible permet d’installer et de configurer un reverse proxy NGINX sur Ubuntu/Debian, et d’obtenir automatiquement un certificat SSL gratuitement via Certbot (Let's Encrypt).
-Il s’appuie sur nos fichiers de configuration et assure le déploiement idempotent.
-
-### Liste des tasks
-
-#### 1. Installation de NGINX et Certbot
-
-> [!NOTE]
-> - Installation du serveur web NGINX et du client Certbot (python3-certbot-nginx).
-
-#### 2. Déploiement de la configuration NGINX
-
-> [!NOTE]
-> - Copie le fichier nginx.conf fourni dans /etc/nginx/nginx.conf.
-> - Redémarrage de NGINX si besoin.
-
-#### 3. Activation & démarrage de NGINX
-
-> [!NOTE]
-> - Vérifie que NGINX est lancé et activé au démarrage.
-
-#### 4. Vérification de disponibilité du site
-    
-> [!NOTE]
-> - Attente du fonctionnement de NGINX (pour garantir la réussite de Certbot).
-
-#### 5. Obtention du certificat SSL LetsEncrypt
-
-> [!NOTE]
-> - Demande non-interactive et automatique du certificat pour le domaine spécifié.
-> - Le certificat et sa clé sont déposés dans /etc/letsencrypt/live/monapp.example.com/.
-
-#### 6. Rechargement de NGINX
-    
-> [!NOTE]
-> - Reload automatique de NGINX pour activer le HTTPS.
+En cas d'absence d’un service attendu, la commande retournera un code d’échec et l’erreur « Service <nom> does not exist ».

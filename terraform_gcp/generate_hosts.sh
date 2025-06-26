@@ -2,258 +2,90 @@
 
 set -e
 
-# Fonction pour afficher les erreurs
-error_exit() {
-    echo "Erreur: $1" >&2
-    exit 1
-}
-
 # Variables
-INVENTORY_FILE="../ansible/inventories/hosts.yml"
-BACKUP_FILE="../ansible/inventories/hosts.yml.backup"
-FORCE_UPDATE=false
-REVERSE_PROXY_IP=$(terraform output -raw reverse_proxy_ip)
-SSH_KEY="~/.ssh/gcp-ssh-key"
+INVENTORY_FILE="../ansible/inventories/swarm-hosts.ini"
+SSH_KEY="${HOME}/.ssh/gcp-ssh-key"
+CACHE_FILE=".terraform/swarm-ips-cache"
 
-# Analyser les arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -f|--force)
-            FORCE_UPDATE=true
-            echo "Mode force activé - les IPs existantes seront remplacées"
-            shift
-            ;;
-        -h|--help)
-            echo "Usage: $0 [-f|--force] [-h|--help]"
-            echo "  -f, --force  Remplace les IPs existantes"
-            echo "  -h, --help   Affiche cette aide"
-            exit 0
-            ;;
-        *)
-            echo "Option inconnue: $1"
-            echo "Utilisez -h pour voir l'aide"
-            exit 1
-            ;;
-    esac
+echo " Génération inventaire Swarm (format INI)..."
+
+# Fonctions
+error_exit() { echo " $1" >&2; exit 1; }
+
+# Vérifications
+[ ! -f "main.tf" ] && error_exit "Pas de Terraform ici"
+[ ! -d ".terraform" ] && error_exit "Terraform non initialisé"
+
+# Récupération des IPs
+MANAGER_IPS=$(terraform output -json swarm_manager_ips | jq -r '.[]') || error_exit "Pas d'output managers"
+WORKER_IPS=$(terraform output -json swarm_worker_ips | jq -r '.[]') || error_exit "Pas d'output workers"  
+LEADER_PUBLIC_IP=$(terraform output -json swarm_manager_public_ips | jq -r '.[0]') || error_exit "Pas d'IP publique"
+LEADER_PRIVATE_IP=$(terraform output -raw swarm_leader_ip) || error_exit "Pas d'IP leader"
+LB_IP=$(terraform output -raw swarm_load_balancer_ip) || error_exit "Pas d'IP LB"
+
+# Créer dossier
+mkdir -p ../ansible/inventories
+
+# Génération du fichier INI (BEAUCOUP plus simple!)
+cat > "$INVENTORY_FILE" << INI_END
+# ===== INVENTAIRE DOCKER SWARM =====
+
+# Variables globales
+[all:vars]
+ansible_user=deploy
+ansible_ssh_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ProxyJump=deploy@${LEADER_PUBLIC_IP}"
+
+# ===== MANAGERS =====
+[swarm_managers]
+INI_END
+
+# Ajouter les managers
+MANAGER_COUNT=1
+for ip in $MANAGER_IPS; do
+    if [ $MANAGER_COUNT -eq 1 ]; then
+        # Premier = Leader avec IP publique
+        echo "manager_${MANAGER_COUNT} ansible_host=${ip} swarm_role=manager swarm_leader=true public_ip=${LEADER_PUBLIC_IP}" >> "$INVENTORY_FILE"
+    else
+        # Autres = Followers via bastion
+        echo "manager_${MANAGER_COUNT} ansible_host=${ip} swarm_role=manager swarm_leader=false ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@${LEADER_PUBLIC_IP}'" >> "$INVENTORY_FILE"
+    fi
+    ((MANAGER_COUNT++))
 done
 
-# Vérifier qu'on est dans le bon répertoire
-if [ ! -f "main.tf" ] && [ ! -f "*.tf" ]; then
-    error_exit "Aucun fichier Terraform trouvé. Es-tu dans le bon répertoire ?"
-fi
+# Ajouter section workers
+cat >> "$INVENTORY_FILE" << INI_WORKERS
 
-echo "Vérification de l'état Terraform..."
+# ===== WORKERS =====
+[swarm_workers]
+INI_WORKERS
 
-# Vérifier que Terraform est initialisé
-if [ ! -d ".terraform" ]; then
-    error_exit "Terraform n'est pas initialisé. Exécute 'terraform init' d'abord."
-fi
-
-# Vérifier qu'il y a un état Terraform
-if ! terraform state list > /dev/null 2>&1; then
-    error_exit "Aucun état Terraform trouvé. Exécute 'terraform apply' d'abord."
-fi
-
-# Vérifie que les outputs sont bien disponibles
-if ! terraform output > /dev/null 2>&1; then
-  echo "Erreur : les outputs Terraform ne sont pas disponibles. As-tu bien exécuté 'terraform apply' ?"
-  exit 1
-fi
-
-echo "Vérification des outputs requis..."
-
-# Vérifier que tous les outputs existent
-declare -A outputs
-required_outputs=("frontend_ip" "reverse_proxy_ip" "backend_ip" "database_ip" "monitoring_ip")
-for output in "${required_outputs[@]}"; do
-    if ! outputs["$output"]=$(terraform output -raw "$output" 2>/dev/null); then
-        error_exit "Output '$output' non trouvé. Vérifie ton fichier outputs.tf"
-    fi
+# Ajouter les workers
+WORKER_COUNT=1
+for ip in $WORKER_IPS; do
+    echo "worker_${WORKER_COUNT} ansible_host=${ip} swarm_role=worker ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@${LEADER_PUBLIC_IP}'" >> "$INVENTORY_FILE"
+    ((WORKER_COUNT++))
 done
 
-echo "Tous les outputs sont disponibles !"
+# Groupes finaux
+cat >> "$INVENTORY_FILE" << INI_GROUPS
 
-# Fonction pour extraire l'IP d'une ligne d'inventaire existante
-extract_existing_ip() {
-    local section=$1
-    if [ -f "$INVENTORY_FILE" ]; then
-        # Trouver la section et récupérer l'IP
-        awk -v section="[$section]" '
-            $0 == section { in_section=1; next }
-            /^
+# ===== GROUPES =====
+[swarm_cluster:children]
+swarm_managers
+swarm_workers
 
-$$
-.*
-$$
+[swarm_nodes:children]
+swarm_managers
+swarm_workers
 
-/ && in_section { exit }
-            in_section && NF > 0 && !/^#/ { 
-                match($0, /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)
-                if (RSTART > 0) {
-                    print substr($0, RSTART, RLENGTH)
-                    exit
-                }
-            }
-        ' "$INVENTORY_FILE"
-    fi
-}
+[swarm_deploy]
+manager_1
 
-# Fonction pour vérifier si une IP a changé
-check_ip_change() {
-    local section=$1
-    local new_ip=$2
-    local existing_ip
-    
-    existing_ip=$(extract_existing_ip "$section")
-    
-    if [ -n "$existing_ip" ] && [ "$existing_ip" != "$new_ip" ]; then
-        echo "⚠️  IP différente détectée pour [$section]:"
-        echo "   Existante: $existing_ip"
-        echo "   Nouvelle:  $new_ip"
-        return 1
-    fi
-    return 0
-}
+[bastion]
+swarm_bastion ansible_host=${LEADER_PUBLIC_IP} private_ip=${LEADER_PRIVATE_IP} lb_ip=${LB_IP} ansible_ssh_common_args='' swarm_role=bastion
+INI_GROUPS
 
-# Créer une sauvegarde si le fichier existe
-if [ -f "$INVENTORY_FILE" ]; then
-    cp "$INVENTORY_FILE" "$BACKUP_FILE"
-    echo "Sauvegarde créée: $BACKUP_FILE"
-fi
-
-# Vérifier les changements si le mode force n'est pas activé
-if [ "$FORCE_UPDATE" = false ] && [ -f "$INVENTORY_FILE" ]; then
-    echo "Vérification des IPs existantes..."
-    
-    conflicts=0
-    declare -A sections=([frontend_ip]="frontend" [reverse_proxy_ip]="reverse_proxy" [backend_ip]="backend" [database_ip]="database" [monitoring_ip]="monitoring")
-    
-    for output in "${!sections[@]}"; do
-        if ! check_ip_change "${sections[$output]}" "${outputs[$output]}"; then
-            ((conflicts++))
-        fi
-    done
-    
-    if [ $conflicts -gt 0 ]; then
-        echo ""
-        echo "❌ $conflicts conflit(s) d'IP détecté(s)."
-        echo "Options:"
-        echo "  1. Réexécuter avec -f pour forcer la mise à jour"
-        echo "  2. Vérifier manuellement les changements"
-        echo "  3. Restaurer depuis: $BACKUP_FILE"
-        exit 1
-    fi
-fi
-
-echo "Génération du fichier hosts.yml..."
-
-# Génération du fichier hosts.ini
-cat > ../ansible/inventories/hosts.yml <<EOF
----
-all:
-  vars:
-    ansible_user: guillaume
-    ansible_port: 22
-    ansible_ssh_private_key_file: ${SSH_KEY}
-    ansible_ssh_common_args: '-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}"'
-  
-  children:
-    frontend:
-      hosts:
-        frontend1:
-          ansible_host: $(terraform output -raw frontend_ip)
-          ansible_port: 22
-    
-    reverse_proxy:
-      hosts:
-        reverse_proxy1:
-          ansible_host: ${REVERSE_PROXY_IP}
-      vars:
-        ansible_port: 22
-        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-    
-    backend:
-      hosts:
-        backend1:
-          ansible_host: $(terraform output -raw backend_ip)
-    
-    database:
-      hosts:
-        database1:
-          ansible_host: $(terraform output -raw database_ip)
-    
-    monitoring:
-      hosts:
-        monitoring1:
-          ansible_host: $(terraform output -raw monitoring_ip)
-
-    web:
-      children:
-        frontend: {}
-        reverse_proxy: {}
-    
-    infrastructure:
-      children:
-        backend: {}
-        database: {}
-        monitoring: {}
-EOF
-
-# cat > ../ansible/inventories/hosts.ini <<EOF
-# [reverse_proxy]
-# reverse_proxy1 ansible_host=${REVERSE_PROXY_IP}
-
-# [frontend]
-# frontend1 ansible_host=$(terraform output -raw frontend_ip)
-
-# [backend]
-# backend1 ansible_host=$(terraform output -raw backend_ip)
-
-# [database]
-# database1 ansible_host=$(terraform output -raw database_ip)
-
-# [monitoring]
-# monitoring1 ansible_host=$(terraform output -raw monitoring_ip)
-
-# [web:children]
-# frontend
-# reverse_proxy
-
-# [infrastructure:children]
-# backend
-# database
-# monitoring
-
-# [all:vars]
-# ansible_user=guillaume
-# ansible_ssh_private_key_file=${SSH_KEY}
-
-# [reverse_proxy:vars]
-# ansible_ssh_common_args=-o StrictHostKeyChecking=no
-
-# [frontend:vars]
-# ansible_ssh_common_args=-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}" -o StrictHostKeyChecking=no
-
-# [backend:vars]
-# ansible_ssh_common_args=-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}" -o StrictHostKeyChecking=no
-
-# [database:vars]
-# ansible_ssh_common_args=-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}" -o StrictHostKeyChecking=no
-
-# [monitoring:vars]
-# ansible_ssh_common_args=-o ProxyCommand="ssh -i ${SSH_KEY} -W %h:%p -q guillaume@${REVERSE_PROXY_IP}" -o StrictHostKeyChecking=no
-# EOF
-
-echo "Fichier hosts.ini généré avec succès !"
-
-echo "Validation du fichier généré..."
-if ansible-inventory -i ../ansible/inventories/hosts.yml --list > /dev/null 2>&1; then
-    echo "✅ Fichier d'inventaire valide !"
-else
-    echo "❌ Erreur dans le fichier généré !"
-    if [ -f "$BACKUP_FILE" ]; then
-        echo "Restauration de la sauvegarde..."
-        cp "$BACKUP_FILE" "$INVENTORY_FILE"
-    fi
-    exit 1
-fi
+echo " Inventaire INI généré: $INVENTORY_FILE"
+echo " $(($MANAGER_COUNT-1)) managers, $(($WORKER_COUNT-1)) workers"
+echo " Commande test: ansible swarm_cluster -i $INVENTORY_FILE -m ping"

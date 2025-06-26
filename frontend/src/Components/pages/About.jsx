@@ -6,12 +6,15 @@ import SectionTitle from '../SectionTitle';
 
 import './About.css';
 
+// const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
+const API_URL = window._env_?.API_URL || "http://localhost:5000";
+
 function About() {
     const [aboutme, setAboutMe] = useState([])
     useEffect(() => {
         const getAboutMe = () => {
             axios
-                .get(`${process.env.REACT_APP_URL_API}/aboutme`)
+                .get(`${API_URL}/aboutme`)
                 .then(res => setAboutMe(res.data[0]))
         }
         getAboutMe()
@@ -47,7 +50,7 @@ function About() {
                     <div className="aboutme-right">
                         <img 
                             className="aboutme-img"
-                            src={`${process.env.REACT_APP_URL_API}/images/${aboutme.aboutme_img}`} 
+                            src={`${API_URL}/images/${aboutme.aboutme_img}`} 
                             alt="aboutme"
                         />
                     </div>

@@ -1,0 +1,71 @@
+---
+- name: Afficher la variable source de clé GCP
+  debug:
+    msg: "gcp_credentials_file = {{ gcp_credentials_file }}, utilisateur cible = {{ ssh_user }}"
+
+- name: Create application directory
+  file:
+    path: "{{ app_directory }}"
+    state: directory
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0755'
+
+- name: Create docker volumes directory
+  file:
+    path: "{{ app_directory }}/volumes"
+    state: directory
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0755'
+
+- name: Create build directory
+  file:
+    path: "{{ app_directory }}/build"
+    state: directory
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0755'
+
+- name: Create frontend directory
+  file:
+    path: "{{ app_directory }}/build/frontend"
+    state: directory
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0755'
+
+- name: Create backend directory
+  file:
+    path: "{{ app_directory }}/build/backend"
+    state: directory
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0755'
+
+- name: Créer dossier letsencrypt pour traefik (wildcard SSL)
+  file:
+    path: "{{ app_directory }}/letsencrypt"
+    state: directory
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0700'
+
+- name: Copier la clé GCP DNS Challenge (optionnel/nécessaire si wildcard SSL)
+  copy:
+    src: "{{ gcp_credentials_file }}"
+    dest: "{{ app_directory }}/gcp-service-account.json"
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0600'
+  become: true
+  when: gcp_credentials_file is defined and gcp_credentials_file | length > 0
+  ignore_errors: false
+
+- name: Copy environment file
+  template:
+    src: templates/app.env.j2
+    dest: "{{ app_directory }}/.env"
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0600'

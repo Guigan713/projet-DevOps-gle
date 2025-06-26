@@ -1,0 +1,46 @@
+# playbooks/roles/dns_management/defaults/main.yml
+---
+# Configuration DNS Google Cloud
+gcp_credentials_file: "/home/guillaume/projet-DevOps-gle/terraform_gcp/credentials/gcp-sa-key.json"
+gcp_project: "{{ project_id }}"
+gcp_auth_kind: "serviceaccount"
+gcp_service_account_file: "{{ gcp_credentials_file }}"
+
+# Configuration domaine
+domain_name: "{{ domain_name }}"
+api_domain: "api.{{ domain_name }}"
+grafana_domain: "grafana.{{ domain_name }}"
+prometheus_domain: "prometheus.{{ domain_name }}"
+traefik_domain: "traefik.{{ domain_name }}"
+dns_ttl: 300
+
+# Services à exposer
+dns_services:
+  - name: "traefik"
+    subdomain: "traefik"
+    port: 8080
+    enabled: true
+  - name: "grafana" 
+    subdomain: "grafana"
+    port: 3000
+    enabled: true
+  - name: "prometheus"
+    subdomain: "prometheus" 
+    port: 9090
+    enabled: true
+  - name: "portainer"
+    subdomain: "portainer"
+    port: 9000
+    enabled: true
+  - name: "api"
+    subdomain: "api"
+    port: 5000
+    enabled: "{{ create_api_subdomain | default(false) }}"
+  - name: "admin"
+    subdomain: "admin" 
+    port: 8080
+    enabled: "{{ create_admin_subdomain | default(false) }}"
+
+# Configuration SSL
+ssl_enabled: true
+ssl_email: "admin@{{ domain_name }}"

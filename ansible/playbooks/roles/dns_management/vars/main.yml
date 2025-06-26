@@ -1,0 +1,8 @@
+# playbooks/roles/dns_management/vars/main.yml
+---
+# Zone DNS calculée
+dns_zone_name: "{{ domain_name | replace('.', '-') }}-zone"
+dns_zone_fqdn: "{{ domain_name }}."
+
+# IP du Load Balancer (récupérée depuis l'inventaire)
+lb_ip: "{{ swarm_lb_ip | default(ansible_default_ipv4.address) }}"

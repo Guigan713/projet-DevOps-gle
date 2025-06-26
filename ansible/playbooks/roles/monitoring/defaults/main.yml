@@ -1,10 +1,10 @@
-# Targets pour node_exporter
-node_exporter_targets:
-  - "{{ frontend_private_ip }}:9100"
-  - "{{ backend_private_ip }}:9100"
-  - "{{ database_private_ip }}:9100"
-  - "{{ monitoring_private_ip }}:9100"
-  - "projet-devops-gle.fr:9100"
+---
+# Monitoring configuration
+prometheus_port: 9090
+grafana_port: 3000
+grafana_password: "{{ vault_grafana_password | default('admin123') }}"
 
-# Reverse proxy
-reverse_proxy_target: "projet-devops-gle.fr:9113"
+# Retention
+prometheus_retention: "30d"
+grafana_retention: "30d"
+

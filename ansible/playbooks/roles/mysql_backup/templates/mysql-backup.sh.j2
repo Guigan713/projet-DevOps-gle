@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+
+# Variables d'environnement
+BUCKET_NAME="${BUCKET_NAME}"
+DB_NAME="${DB_NAME:-myapp}"
+BACKUP_DIR="/tmp/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+
+# Création du répertoire de backup
+mkdir -p $BACKUP_DIR
+
+# Backup MySQL depuis le service Docker Swarm
+echo " Démarrage du backup MySQL..."
+docker exec $(docker ps -qf "name=mysql") \
+  mysqldump -u root -p${MYSQL_ROOT_PASSWORD} \
+  --all-databases \
+  --routines \
+  --triggers > $BACKUP_DIR/mysql_backup_$DATE.sql
+
+# Compression
+gzip $BACKUP_DIR/mysql_backup_$DATE.sql
+
+# Upload vers GCS
+echo " Upload vers Google Cloud Storage..."
+gsutil cp $BACKUP_DIR/mysql_backup_$DATE.sql.gz \
+  gs://$BUCKET_NAME/mysql/mysql_backup_$DATE.sql.gz
+
+# Nettoyage local
+rm -rf $BACKUP_DIR
+
+echo " Backup terminé: mysql_backup_$DATE.sql.gz"

@@ -7,13 +7,21 @@ Ce module Terraform permet de créer un bucket Google Cloud Storage dédié au s
 ### Le module configure automatiquement :
 
 > [!NOTE]
-> - Un bucket Google Cloud Storage optimisé pour les sauvegardes
-> - Versioning activé pour conserver plusieurs versions des backups
-> - Labels pour faciliter l'organisation et la facturation
+> - **Création automatique d’un bucket Google Cloud Storage optimisé pour les sauvegardes**
+> - **Versioning** : conservation de plusieurs versions de chaque fichier de sauvegarde
+> - **Gestion du cycle de vie** : automatisation du passage en Coldline/archivage et de la suppression des anciens fichiers
+> - **Labels** : pour l’organisation, le suivi environnement et la facturation
+> - **Gestion fine des accès** avec un Service Account dédié
+> - **Distribution de clé de service** : permet l’usage sécurisé côté script ou VM
+
 
 ### Resources créées
 
-> - google_storage_bucket : Bucket de stockage pour les sauvegardes MySQL
+> - **google_storage_bucket** : Bucket principal pour stocker les sauvegardes
+> - **google_service_account** : Service Account dédié pour réaliser les sauvegardes
+> - **google_storage_bucket_iam_member** : Attribution du rôle d’écriture (objectAdmin) au Service Account sur ce bucket
+> - **google_service_account_key** : Génération d’une clé privée pour accéder au bucket côté scripts/serveurs
+
 
 ## Variables requises
 
@@ -23,6 +31,7 @@ Ce module Terraform permet de créer un bucket Google Cloud Storage dédié au s
 | `project_name` | string | Nom du projet (utilisé dans le nom du bucket) | `"myapp"` | - |
 | `location` | string | Région/zone du bucket | `"europe-west1"` | - |
 | `storage_class` | string | Classe de stockage du bucket | `"STANDARD"` | - |
+| `environment` | string |  	Environnement d'usage (pour les labels) | `"prod"` | - |
 
 ## Classes de stockage disponibles
 
