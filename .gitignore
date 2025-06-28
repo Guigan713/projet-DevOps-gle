@@ -21,7 +21,6 @@
 
 ansible/group_vars
 .vault_pass
-.ansible_vault_password
 
 .vscode
 
