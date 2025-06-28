@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      # - main
-      - test
+      - main
 
 jobs:
   test-and-analyze:
@@ -32,7 +31,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -40,7 +38,6 @@ jobs:
           # cache: 'npm'
           # cache-dependency-path: 'backend/package-lock.json'
 
-      # installation des dépendences
       - name: Install dependencies Back
         run: |
           cd backend
@@ -51,21 +48,6 @@ jobs:
           cd frontend
           npm install
 
-      # Run Tests
-      # - name: Run Frontend Tests
-      #   working-directory: frontend
-      #   run: npm test -- --ci --coverage --passWithNoTests
-
-      # - name: Run Backend Tests
-      #   working-directory: backend
-      #   env:
-      #     DB_HOST: 127.0.0.1
-      #     DB_USER: ${MYSQL_USER}
-      #     DB_PASSWORD: ${MYSQL_PASSWORD}
-      #     DB_NAME: ${MYSQL_DATABASE}
-      #   run: npm test -- --ci --coverage --passWithNoTests
-
-      # SonarQube Analysis
       - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -82,3 +64,20 @@ jobs:
             -Dsonar.language=js \
             -Dsonar.coverage.exclusions=**/node_modules/**,**/*.test.js \
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
+
+
+
+
+      # Run Tests
+      # - name: Run Frontend Tests
+      #   working-directory: frontend
+      #   run: npm test -- --ci --coverage --passWithNoTests
+
+      # - name: Run Backend Tests
+      #   working-directory: backend
+      #   env:
+      #     DB_HOST: 127.0.0.1
+      #     DB_USER: ${MYSQL_USER}
+      #     DB_PASSWORD: ${MYSQL_PASSWORD}
+      #     DB_NAME: ${MYSQL_DATABASE}
+      #   run: npm test -- --ci --coverage --passWithNoTests

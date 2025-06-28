@@ -14,7 +14,6 @@ output "domain_endpoints" {
     main  = "https://${var.domain_name}"
     www   = "https://www.${var.domain_name}"
     api   = var.create_api_subdomain ? "https://api.${var.domain_name}" : null
-    # admin = var.create_admin_subdomain ? "https://admin.${var.domain_name}" : null
     grafana = "https://grafana.${var.domain_name}"
     prometheus = "https://prometheus.${var.domain_name}"
     traefik = "https://traefik.${var.domain_name}"

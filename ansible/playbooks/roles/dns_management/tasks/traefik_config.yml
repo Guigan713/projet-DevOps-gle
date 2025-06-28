@@ -14,11 +14,3 @@
     mode: '0644'
   become: true
   notify: restart traefik
-
-# - name: Update Traefik Docker Compose configuration
-#   template:
-#     src: traefik-compose.yml.j2
-#     dest: /opt/docker/traefik/docker-compose.yml
-#     mode: '0644'
-#   become: true
-#   notify: restart traefik

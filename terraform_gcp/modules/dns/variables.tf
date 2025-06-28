@@ -13,12 +13,6 @@ variable "swarm_lb_ip" {
   type        = string
 }
 
-# variable "create_admin_subdomain" {
-#   description = "Créer un sous-domaine admin.domain.com"
-#   type        = bool
-#   default     = false
-# }
-
 variable "create_api_subdomain" {
   description = "Créer un sous-domaine api.domain.com"
   type        = bool

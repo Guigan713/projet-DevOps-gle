@@ -7,9 +7,14 @@ const pool = require('./config/db');
 const routes = require('./routes/index')
 const path = require('path');
 
+const promClient = require('prom-client');
+
 const port = process.env.PORT || 5000
 
 const app = express();
+
+const register = new promClient.Registry();
+
 app.use(cors({
     origin: [
         'https://projet-devops-gle.fr',
@@ -30,6 +35,12 @@ app.use('/api/about', routes.about)
 app.use('/api/aboutme', routes.aboutme)
 app.use('/api/snaps', routes.snaps)
 // app.use('/monitor', routes.monitor)
+
+// endpoint pour métriques prometheus
+app.get('/metrics', async (req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+});
 
 app.get('/health', (req, res) => {
     res.status(200).send('OK!');

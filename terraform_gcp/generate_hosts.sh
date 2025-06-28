@@ -26,7 +26,7 @@ LB_IP=$(terraform output -raw swarm_load_balancer_ip) || error_exit "Pas d'IP LB
 # Créer dossier
 mkdir -p ../ansible/inventories
 
-# Génération du fichier INI (BEAUCOUP plus simple!)
+# Génération du fichier INI
 cat > "$INVENTORY_FILE" << INI_END
 # ===== INVENTAIRE DOCKER SWARM =====
 
@@ -36,7 +36,7 @@ ansible_user=deploy
 ansible_ssh_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ProxyJump=deploy@${LEADER_PUBLIC_IP}"
 
-# ===== MANAGERS =====
+# MANAGERS
 [swarm_managers]
 INI_END
 
@@ -56,7 +56,7 @@ done
 # Ajouter section workers
 cat >> "$INVENTORY_FILE" << INI_WORKERS
 
-# ===== WORKERS =====
+# WORKERS
 [swarm_workers]
 INI_WORKERS
 
@@ -70,7 +70,6 @@ done
 # Groupes finaux
 cat >> "$INVENTORY_FILE" << INI_GROUPS
 
-# ===== GROUPES =====
 [swarm_cluster:children]
 swarm_managers
 swarm_workers

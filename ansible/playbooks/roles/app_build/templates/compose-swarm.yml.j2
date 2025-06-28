@@ -7,35 +7,24 @@ services:
       - "--api.dashboard=true"
       - "--api.insecure=false"
       - "--providers.docker=true"
-      - "--providers.swarm"
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=traefik-public"
+      - "--providers.docker.watch=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=gcloud"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
       - "--certificatesresolvers.letsencrypt.acme.email={{ acme_email }}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
       - "--metrics.prometheus=true"
-      - "--metrics.prometheus.addEntryPointsLabels=true"
-      - "--metrics.prometheus.addServicesLabels=true"
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"
     volumes:
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-
-      - type: bind
-        source: {{ app_directory }}/letsencrypt
-        target: /letsencrypt
-
-      - type: bind
-        source: {{ gcp_swarm_sa_json }}
-        target: /gcp-service-account.json
-        read_only: true
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/docker/letsencrypt:/letsencrypt
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "/gcp-service-account.json"
     networks:
@@ -43,12 +32,18 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.traefik.enable==true
+          - node.hostname == swarm-manager-1
       replicas: 1
       restart_policy:
         condition: on-failure
       labels:
-        - "traefik.enable=false"
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik-dashboard.rule=Host(`{{ traefik_domain }}`)"
+        - "traefik.http.routers.traefik-dashboard.entrypoints=web,websecure"
+        - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.traefik-dashboard.service=api@internal"
+        - "traefik.http.services.api.loadbalancer.server.port=8080"
+        - "traefik.docker.network=traefik-public"
 
   database:
     image: mysql:8.0
@@ -93,6 +88,7 @@ services:
     networks:
       - app_network
       - traefik-public
+      - monitoring_network
     ports:
       - "5000"
     depends_on:
@@ -174,13 +170,16 @@ services:
     volumes:
       - prometheus_data:/prometheus
       - /opt/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /opt/monitoring/prometheus/console_libraries:/etc/prometheus/console_libraries:ro
+      - /opt/monitoring/prometheus/consoles:/etc/prometheus/consoles:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - monitoring_network
       - traefik-public
     deploy:
       placement:
         constraints:
-          - node.labels.monitoring.enable==true
+          - node.role == manager
       replicas: 1
       restart_policy:
         condition: on-failure
@@ -191,6 +190,9 @@ services:
         - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
         - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
         - "traefik.docker.network=traefik-public"
+        - "traefik.http.routers.prometheus-insecure.rule=Host(`{{ prometheus_domain }}`)"
+        - "traefik.http.routers.prometheus-insecure.entrypoints=web"  
+        - "traefik.http.routers.prometheus-insecure.middlewares=redirect-to-https" 
 
   grafana:
     image: grafana/grafana:latest
@@ -223,6 +225,39 @@ services:
         - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
         - "traefik.http.services.grafana.loadbalancer.server.port=3000"
         - "traefik.docker.network=traefik-public"
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.systemd'
+      - '--web.listen-address=:9100'
+    volumes:
+      - '/:/host:ro,rslave'
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+    networks:
+      - monitoring_network
+    ports:
+      - "9100"
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.platform.os == linux
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.10'
+        reservations:
+          memory: 64M
+          cpus: '0.05'
+      labels:
+        - "traefik.enable=false"
 
 networks:
   traefik-public:

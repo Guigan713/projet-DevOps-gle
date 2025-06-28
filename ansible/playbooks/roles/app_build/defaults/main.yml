@@ -24,8 +24,10 @@ db_user: "guillaume"
 db_host: "database"
 db_port: "3306"
 
+api_domain: "api.{{ domain_name }}"
 grafana_domain: "grafana.{{ domain_name }}"
 prometheus_domain: "prometheus.{{ domain_name }}"
+traefik_domain: "traefik.{{ domain_name }}"
 grafana_admin_user: "admin"
 prometheus_retention_time: "15d"
 

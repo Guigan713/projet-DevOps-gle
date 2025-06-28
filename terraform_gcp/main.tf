@@ -84,7 +84,4 @@ module "dns" {
   
   # Pointe vers le Load Balancer Swarm
   swarm_lb_ip = module.instances.swarm_lb_ip
-  
-  # # sous-domaines
-  # create_admin_subdomain = var.create_admin_subdomain
 }

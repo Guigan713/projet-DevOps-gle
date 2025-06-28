@@ -230,7 +230,7 @@
   gather_facts: no
   tasks:
     - name: Get the node name where the MySQL service is running
-      command: docker service ps --filter 'desired-state=running' --format '{{ "{{.Node}}" }}' projet-devops-gle_database
+      command: docker service ps --filter 'desired-state=running' --format '{{ "{{.Node}}" }}' {{ db_service_name }}
       register: db_node_name
 
     - name: Copie le script SQL sur le noeud porteur DB

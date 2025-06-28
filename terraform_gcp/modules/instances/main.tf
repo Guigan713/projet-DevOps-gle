@@ -25,7 +25,6 @@ resource "google_compute_instance" "swarm_manager" {
     network    = var.vpc_id
     subnetwork = var.public_subnet_id
     
-    # Premier manager avec IP publique pour accès SSH
     dynamic "access_config" {
       for_each = count.index == 0 ? [1] : []
       content {

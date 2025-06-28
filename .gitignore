@@ -29,3 +29,5 @@ backend/.env
 backend/node_modules
 
 .github/workflows/.env
+
+text.txt

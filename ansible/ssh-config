@@ -7,7 +7,7 @@ Host *
     LogLevel ERROR
     ServerAliveInterval 60
 
-# ===== BASTION / LEADER =====
+# BASTION / LEADER
 Host swarm-bastion swarm-leader manager-1
     HostName 34.140.50.4
     Port 22
@@ -17,7 +17,7 @@ Host swarm-bastion swarm-leader manager-1
     LocalForward 3000 localhost:3000
     LocalForward 9000 localhost:9000
 
-# ===== MANAGERS =====
+# MANAGERS
 Host manager-1 swarm-manager-1
     HostName 10.0.1.4
     Port 22
@@ -31,7 +31,7 @@ Host manager-3 swarm-manager-3
     Port 22
 
 
-# ===== WORKERS (via bastion) =====
+# WORKERS (via bastion)
 Host worker-1 swarm-worker-1
     HostName 10.0.2.2
     Port 22
@@ -43,7 +43,7 @@ Host worker-2 swarm-worker-2
     ProxyJump swarm-bastion
 
 
-# ===== ALIASES UTILES =====
+# ALIASES UTILES
 Host swarm-deploy
     HostName 34.140.50.4
     Port 22

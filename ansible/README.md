@@ -17,6 +17,7 @@ L’ensemble est orchestré via un playbook structuré et des rôles réutilisab
 
 ## Prérequis
 
+> [!NOTE]
 > - Ansible >= 2.9
 > - Un inventaire compatible (fichier INI dynamique auto-généré après terraform)
 > - Une clé SSH publique prête à être injectée (via la variable ssh_public_key)
@@ -27,6 +28,7 @@ L’ensemble est orchestré via un playbook structuré et des rôles réutilisab
 
 ### Automatique
 
+> [!NOTE]
 > - Via GitHub Actions CI/CD, par exemple à chaque merge/push sur main
 Déclenche le workflow build-deploy-gcp.yml
 
@@ -43,6 +45,7 @@ Chaque section correspond à un ensemble logique de tâches ou à l’exécution
 
 ### 1. Collecte des facts et informations système
 
+> [!NOTE]
 > - Récupère les informations système de chaque hôte du cluster
 > - Vérifie la connectivité et la cohérence de l’inventaire
 
@@ -55,6 +58,7 @@ Chaque section correspond à un ensemble logique de tâches ou à l’exécution
 
 ### 2. Configuration utilisateur SSH
 
+> [!NOTE]
 > - Crée/modifie l’utilisateur {{ ssh_user }}
 > - Provisionne la clé publique d’accès SSH
 > - Accorde les droits sudo sans mot de passe
@@ -62,6 +66,7 @@ Chaque section correspond à un ensemble logique de tâches ou à l’exécution
 
 ### 3. Installation des prérequis Docker
 
+> [!NOTE]
 > - Installation des dépendances système nécessaires pour Docker
 > - Ajout du dépôt officiel Docker / GPG key
 > - Installation de Docker CE, Docker Compose et Python Docker SDK
@@ -70,45 +75,55 @@ Chaque section correspond à un ensemble logique de tâches ou à l’exécution
 
 ### 4. Initialisation du cluster Docker Swarm
 
+> [!NOTE]
 > - Provisionne le cluster :
 >    - Exécution sur le groupe swarm_managers et swarm_workers
 >    - Les tâches d’initialisation, prise de token, join cluster, etc. sont gérées par le rôle docker_swarm
 
 ### 5. Configuration des backups MySQL
 
+> [!NOTE]
 > - Déploiement d’un mécanisme automatisé de sauvegarde MySQL
 > - Exécuté uniquement sur le premier manager (swarm_managers[0])
 > - Piloté via le rôle mysql_backup
 
 ### 6. Build des fichiers l’application
 
+> [!NOTE]
 > - Création des dossiers qui accueilleront la configuration de docker swarm
 
 ### 7. Gestion des images Docker et versionning applicatif
 
+> [!NOTE]
 > - Build/push des images Docker localement
 > - passage de la variable de version à la suite 
 > - génération du fichier Compose 
 
 ### 8. déploiement
+
+> [!NOTE]
 > - déploiement de la stack Swarm via le rôle app_deploy.
 
 ### 9. Injection SQL post-déploiement
 
+> [!NOTE]
 > - Injection automatique des premières données applicatives dans MySQL.
 
 ### 10. Installation monitoring simple (Node Exporter)
 
+> [!NOTE]
 > - Déploiement de Node Exporter sur tous les serveurs avec gestion de l’utilisateur dédié, permissions, etc.
 > - Le rôle node_exporter s’occupe du cycle de vie complet (install, service, vérification)
 
 ### 11. Déploiement de la stack de monitoring complète
 
+> [!NOTE]
 > - Déployée sur le manager principal (swarm_managers[0])
 > - Utilise le rôle monitoring (Prometheus, Grafana, dashboards…)
 
 ### 12. Gestion DNS & SSL
 
+> [!NOTE]
 > - Rôle dédié sur le leader pour gestion automatisée (DNS, certificats SSL/LetsEncrypt...).
 
 
@@ -139,32 +154,38 @@ Chaque section correspond à un ensemble logique de tâches ou à l’exécution
 
 ### Rôle : docker_swarm
 
+> [!NOTE]
 > - Initialise le cluster Swarm
 > - Gère l’adhésion des workers et managers
 > - Modulaire et idempotent
 
 ### Rôle : mysql_backup
 
+> [!NOTE]
 > - Installe les outils de backup MySQL (dump, script)
 > - Déploie/crée un cron pour l’exécution récurrente et la gestion des logs
 
 ### Rôle : monitoring
 
+> [!NOTE]
 > - Mise en place de l’environnement Prometheus + Grafana (config + docker-compose)
 > - Gestion des variables et dashboards
 
 ### Rôle : node_exporter
 
+> [!NOTE]
 > - Installation binaire
 > - Création de l’utilisateur et group dédiés
 > - Déploiement service systemd et vérification de l’endpoint
 
 ### Rôle : app_build
 
+> [!NOTE]
 > - crée les différents dossiers importants de la configuration
 
 ### Section Images et versionning
 
+> [!NOTE]
 > - Authentification à Docker Hub avec des credentials sécurisés
 > - Génération automatique d’un tag unique pour chaque build (deploy_version) basé sur un horodatage
 > - Build et push distincts des images backend et frontend depuis le répertoire local vers Docker Hub, avec le tag correspondant
@@ -175,11 +196,13 @@ Chaque section correspond à un ensemble logique de tâches ou à l’exécution
 
 ### Rôle : app_deploy
 
+> [!NOTE]
 > - Déploie, configure et lance votre application (frontend, backend)
 > - Prend en charge le lancement en swarm stack ou via Compose selon config
 
 ### Section Injection SQL
 
+> [!NOTE]
 > - Détection dynamique du nœud porteur du service DB. Utilise docker service ps pour identifier le nœud Swarm (manager ou worker) sur lequel tourne le container MySQL
 > - Transfert contextuel du script SQL:
 >    - Le fichier SQL à injecter est copié en direct sur le bon hôte, grâce à la délégation (delegate_to).
@@ -191,11 +214,12 @@ Chaque section correspond à un ensemble logique de tâches ou à l’exécution
 
 ### Rôle : dns_management 
 
+> [!NOTE]
 > - configuration DNS, SSL, letsencrypt.
 
 ## Variables globales principales
 
-## Variables à retrouver dans group_vars/all.yml (extrait) :
+### Variables à retrouver dans group_vars/all.yml (extrait) :
 
 ```yml
 # Application & Infra
@@ -257,7 +281,7 @@ Modèle d’inventaire
 ## Exemple de fichier inventories/hosts.ini (bastion inclus, proxy SSH) :
 
 ```ini
-# ===== INVENTAIRE DOCKER SWARM =====
+# INVENTAIRE DOCKER SWARM 
 
 # Variables globales
 [all:vars]
@@ -265,18 +289,18 @@ ansible_user=deploy
 ansible_ssh_private_key_file=/home/guillaume/.ssh/gcp-ssh-key
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4"
 
-# ===== MANAGERS =====
+# MANAGERS 
 [swarm_managers]
 manager_1 ansible_host=10.0.1.4 swarm_role=manager swarm_leader=true public_ip=34.140.50.4
 manager_2 ansible_host=10.0.1.3 swarm_role=manager swarm_leader=false ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4'
 manager_3 ansible_host=10.0.1.2 swarm_role=manager swarm_leader=false ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4'
 
-# ===== WORKERS =====
+# WORKERS 
 [swarm_workers]
 worker_1 ansible_host=10.0.2.2 swarm_role=worker ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4'
 worker_2 ansible_host=10.0.2.3 swarm_role=worker ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@34.140.50.4'
 
-# ===== GROUPES =====
+# GROUPES 
 [swarm_cluster:children]
 swarm_managers
 swarm_workers
@@ -293,7 +317,6 @@ swarm_bastion ansible_host=34.140.50.4 private_ip=10.0.1.4 lb_ip=34.140.50.4 ans
 ```
 
 > [NOTE] 
-
 > - Utilisation d’un proxy jump (bastion) pour l’accès aux nœuds privés
 > - Rôle précis de chaque serveur (swarm_role, swarm_leader)
 > - Possibilité de filtrer/target à l’exécution via les groupes

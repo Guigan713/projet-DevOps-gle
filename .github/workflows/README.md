@@ -8,6 +8,7 @@ Ce workflow GitHub Actions nommé Test Workflow dédié à l’exécution des te
 
 Le workflow est déclenché dans 2 cas:
 
+> [!NOTE]
 > - manuellement via **workflow_dispatch**
 > - automatiquement lors de chaque push sur la branche **main**
 
@@ -69,25 +70,18 @@ Le workflow se déclenche automatiquement à la fin de l’exécution complète 
 1. Checkout repository
 > - Récupère le code source pour permettre l'exécution des tâches suivantes
 
-2. Setup Node.js
-> - Installe Node.js pour la gestion des dépendances et le build des applications Node.
-
-3. Installation des dépendences et build du frontend
-> - Installation (npm install) et compilation (npm run build) de la partie frontend située dans le dossier frontend.
-
-4. Installation des dépendences et build du backend
-> - Installation (npm install) et compilation (npm run build) de la partie backendend située dans le dossier backend.
-
-5. Setup Python
+2. Setup Python
 > - Installe Python 3.13, nécessaire pour exécuter Ansible
 
-6. Installation d’Ansible et des dépendances nécessaires
+3. Installation d’Ansible et des dépendances nécessaires
 > - Met à jour pip, puis installe Ansible et la bibliothèque boto3 (utilisée pour l’intégration AWS)
 
-7. Configuration de la clé SSH
+4. Installation de module Ansible Galaxy nécessaires à la configuration d'Ansible
+
+5. Configuration de la clé SSH
 > - Déploie la clé privée SSH fournie dans le secret GitHub *AWS_PRIVATE_KEY*, avec les droits d’accès appropriés, pour permettre la connexion SSH aux serveurs de destination.
 
-8. Exécution du playbook Ansible
+6. Exécution du playbook Ansible
 > - Lance le playbook deploy.yml via Ansible pour déployer l’application sur les serveurs listés dans le fichier d’inventaire inventories/hosts.ini.
 
 ## Workflow de versionning -> release.yml

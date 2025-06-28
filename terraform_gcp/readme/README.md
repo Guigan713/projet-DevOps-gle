@@ -27,36 +27,50 @@ Il inclut : provisioning réseau, VM managers/workers, sécurité firewall, lo
 ## Modules
 
 ### Network Module
+
+> [!NOTE]
 > - **VPC dédié** : sous-réseau public pour managers & reverse proxy, privé pour workers uniquement (pas d’Internet direct).
 > - **Router & NAT Gateway** : accès sortant privé sécurisé pour update/backup.
 
 ### Instances Module
+
+> [!NOTE]
 > - **Managers** : 1+ VMs, accès SSH & API GCP via bastion/ReverseProxy, tag swarm-manager.
 > - **Workers** : 1+ VMs, tag swarm-worker, accès interne uniquement.
 > - **Load balancer** : IP publique fixe, routage vers managers (ex : HAProxy/Traefik).
 > - **SSH** : accès clé publique, bastion unique (sécurité accrue).
 
 ### Security Groups Module
+
+> [!NOTE]
 > - **Pare-feu granulaire** (TCP/22 restreint, ports du cluster Swarm…).
 > - **HTTP/HTTPS** et monitoring ouverts si besoin.
 > - **Isolation réseau par tag**.
 > - **Sortie Internet workers via NAT uniquement**.
 
 ### GCP Backup Module
+
+> [!NOTE]
 > - **Bucket GCP storage** avec politique de rétention
 > - **Cross-region** configurable.
 
 ### DNS Module
+
+> [!NOTE]
 > - **Cloud DNS** domain/subdomain pointant sur IP du load balancer
 > - **Sous-domaines automatiques pour services**
 
 ## Configuration requise
 
 ### Versions
+
+> [!NOTE]
 > - **Terraform**: >= 1.0.0
 > - **Google Provider**: ~> 5.0
 
 ### Authentification
+
+
 ```json
 // credentials/gcp-sa-key.json
 {
@@ -68,11 +82,12 @@ Il inclut : provisioning réseau, VM managers/workers, sécurité firewall, lo
 
 ## Fichiers / Structure type
 
-> - main.tf : root config, providers, appel modules
-> - outputs.tf / variables.tf : variables d'entrée et de sortie principales
-> - modules/ : sous-modules (network, instances, security_groups, gcp_backup, dns)
-> - credentials/gcp-sa-key.json : clé de service GCP
-> - terraform.tfvars : variables d’environnement
+> [!NOTE]
+> - **main.tf **: root config, providers, appel modules
+> - **outputs.tf** / variables.tf : variables d'entrée et de sortie principales
+> - **modules/** : sous-modules (network, instances, security_groups, gcp_backup, dns)
+> - **credentials/gcp-sa-key.json** : clé de service GCP
+> - **terraform.tfvars** : variables d’environnement
 
 
 ## Variables
@@ -125,6 +140,7 @@ Il inclut : provisioning réseau, VM managers/workers, sécurité firewall, lo
 ## Utilisation
 
 ### 1. Prérequis
+
 ```bash
 # Installer Terraform
 curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -

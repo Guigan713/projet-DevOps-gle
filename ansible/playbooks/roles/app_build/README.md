@@ -31,7 +31,7 @@ Dans le playbook principal :
 ```yml
 - hosts: swarm_managers
   roles:
-    - role: app_prepare
+    - role: app_build
 ```
 
 ## Pré-requis
