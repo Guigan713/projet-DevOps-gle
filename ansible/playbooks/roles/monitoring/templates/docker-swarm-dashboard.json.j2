@@ -20,13 +20,7 @@
   "panels": [
     {
       "collapsed": false,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
+      "gridPos": {"h": 1,"w": 24,"x": 0,"y": 0},
       "id": 1,
       "panels": [],
       "title": "Docker Swarm Overview",
@@ -36,925 +30,277 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 3
-              },
-              {
-                "color": "red",
-                "value": 5
-              }
+              {"color": "green","value": null},
+              {"color": "yellow","value": 2},
+              {"color": "red","value": 1}
             ]
           },
           "unit": "short"
         }
       },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 1
-      },
+      "gridPos": {"h": 4,"w": 4,"x": 0,"y": 1},
       "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
+      "options": {"colorMode":"value","graphMode":"area","justifyMode":"auto"},
       "targets": [
         {
           "expr": "count(up{job=\"node-exporter\"} == 1)",
-          "interval": "",
-          "legendFormat": "Active Nodes",
+          "legendFormat": "Healthy Nodes",
           "refId": "A"
         }
       ],
-      "title": "Active Nodes",
+      "title": "Healthy Swarm Nodes",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1
-              },
-              {
-                "color": "green",
-                "value": 5
-              }
+              {"color": "red","value": null},
+              {"color": "yellow","value": 1},
+              {"color": "green","value": 5}
             ]
           },
           "unit": "short"
         }
       },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 1
-      },
+      "gridPos": {"h": 4,"w": 4,"x": 4,"y": 1},
       "id": 3,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
+      "options": {"colorMode":"value","graphMode":"area","justifyMode":"auto"},
       "targets": [
         {
-          "expr": "count(count by (service_name) (up{job=~\"docker-swarm|projet-devops-gle_backend\"} == 1))",
-          "interval": "",
-          "legendFormat": "Running Services",
+          "expr": "count(count by (service_name) (up{job=~\"docker-swarm|myapp-backend|traefik\"} == 1))",
+          "legendFormat": "Running Swarm Services",
           "refId": "A"
         }
       ],
-      "title": "Running Services",
+      "title": "Running Swarm Services",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
+          "unit": "percent",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 10
-              },
-              {
-                "color": "red",
-                "value": 20
-              }
+              {"color": "green","value": null},
+              {"color": "yellow","value": 60},
+              {"color": "red","value": 90}
             ]
-          },
-          "unit": "short"
+          }
         }
       },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
-      },
+      "gridPos": {"h": 4,"w": 4,"x": 8,"y": 1},
       "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
+      "options": {"colorMode":"value","graphMode":"area","justifyMode":"auto"},
       "targets": [
         {
-          "expr": "count(count by (container_label_com_docker_swarm_service_name) (container_last_seen))",
-          "interval": "",
-          "legendFormat": "Total Containers",
+          "expr": "avg(rate(node_cpu_seconds_total{mode=\"user\"}[1m])) by (instance) * 100",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
-      "title": "Total Containers",
+      "title": "Average Node CPU Usage (%)",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
+          "color": {"mode": "thresholds"},
+          "unit": "bytes",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
+              {"color": "green","value": null},
+              {"color": "yellow","value": 70 * 1024 * 1024 * 1024},
+              {"color": "red","value": 90 * 1024 * 1024 * 1024}
             ]
-          },
-          "unit": "short"
+          }
         }
       },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
-      },
+      "gridPos": {"h": 4,"w": 4,"x": 12,"y": 1},
       "id": 5,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
+      "options": {"colorMode":"value","graphMode":"area","justifyMode":"auto"},
       "targets": [
         {
-          "expr": "count(up{job=\"node-exporter\"} == 0)",
-          "interval": "",
-          "legendFormat": "Down Nodes",
+          "expr": "avg(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) by (instance)",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
-      "title": "Down Nodes",
+      "title": "Average Node Memory Used",
       "type": "stat"
     },
     {
       "collapsed": false,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
+      "gridPos": {"h": 1,"w": 24,"x": 0,"y": 6},
       "id": 6,
       "panels": [],
-      "title": "Resource Usage",
+      "title": "Application Health",
       "type": "row"
     },
     {
       "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
+      "fieldConfig": {"defaults": {"color":{"mode":"palette-classic"},"unit":"reqps"}},
+      "gridPos": {"h": 8,"w": 6,"x": 0,"y": 7},
       "id": 7,
       "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-          "interval": "",
-          "legendFormat": "CPU Usage - {{instance}}",
-          "refId": "A"
-        }
-      ],
-      "title": "CPU Usage by Node",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 80
-              },
-              {
-                "color": "red",
-                "value": 95
-              }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": ["mean", "max"],
-          "displayMode": "table",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "expr": "((node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes) / node_memory_MemTotal_bytes) * 100",
-          "interval": "",
-          "legendFormat": "Memory Usage - {{instance}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Memory Usage by Node",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 14
-      },
-      "id": 9,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "expr": "irate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
-          "interval": "",
-          "legendFormat": "RX {{device}} - {{instance}}",
-          "refId": "A"
-        },
-        {
-          "expr": "irate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])",
-          "interval": "",
-          "legendFormat": "TX {{device}} - {{instance}}",
-          "refId": "B"
-        }
-      ],
-      "title": "Network Traffic",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 14
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"rootfs\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"rootfs\"})",
-          "interval": "",
-          "legendFormat": "Disk Usage - {{instance}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Disk Usage",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 22
-      },
-      "id": 11,
-      "panels": [],
-      "title": "Docker Services",
-      "type": "row"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            }
-          },
-          "mappings": []
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 23
-      },
-      "id": 12,
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "values": ["value"]
-        },
-        "pieType": "donut",
-        "reduceOptions": {
-          "values": false,
-          "calcs": ["lastNotNull"],
-          "fields": ""
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "targets": [
-        {
-          "expr": "count by (job) (up == 1)",
-          "interval": "",
-          "legendFormat": "{{job}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Services Status",
-      "type": "piechart"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 23
-      },
-      "id": 13,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      },
-      "targets": [
-        {
-          "expr": "rate(traefik_service_requests_total[5m])",
-          "interval": "",
-          "legendFormat": "{{service}} - {{method}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Traefik Request Rate",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 31
-      },
-      "id": 14,
-      "panels": [],
-      "title": "Application Metrics",
-      "type": "row"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "ms"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 32
-      },
-      "id": 15,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      },
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, rate(traefik_service_request_duration_seconds_bucket[5m]) * 1000)",
-          "interval": "",
-          "legendFormat": "95th percentile - {{service}}",
-          "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.50, rate(traefik_service_request_duration_seconds_bucket[5m]) * 1000)",
-          "interval": "",
-          "legendFormat": "50th percentile - {{service}}",
-          "refId": "B"
-        }
-      ],
-      "title": "Response Times",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "reqps"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 32
-      },
-      "id": 16,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
+        "legend": {"displayMode":"table"},
+        "tooltip": {"mode":"multi"}
       },
       "targets": [
         {
           "expr": "sum(rate(traefik_service_requests_total{code=~\"2..\"}[5m])) by (service)",
-          "interval": "",
           "legendFormat": "2xx - {{service}}",
           "refId": "A"
         },
         {
           "expr": "sum(rate(traefik_service_requests_total{code=~\"4..\"}[5m])) by (service)",
-          "interval": "",
           "legendFormat": "4xx - {{service}}",
           "refId": "B"
         },
         {
           "expr": "sum(rate(traefik_service_requests_total{code=~\"5..\"}[5m])) by (service)",
-          "interval": "",
           "legendFormat": "5xx - {{service}}",
           "refId": "C"
         }
       ],
-      "title": "HTTP Status Codes",
+      "title": "HTTP Status Codes (Traefik, par service)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode":"thresholds"},
+          "unit":"short"
+        }
+      },
+      "gridPos": {"h": 6,"w": 6,"x": 6,"y": 7},
+      "id": 8,
+      "options": {},
+      "targets": [
+        {
+          "expr": "up{job=\"myapp-backend\"}",
+          "legendFormat": "{{instance}} - Backend up",
+          "refId": "A"
+        }
+      ],
+      "title": "Backend Status",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {"h": 8,"w": 6,"x": 12,"y": 7},
+      "id": 9,
+      "options": {"legend": {"displayMode": "list"}},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{job=\"myapp-backend\"}[5m])",
+          "legendFormat": "Backend requests: {{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Backend Requests/sec",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8,"w": 6,"x": 18,"y": 7},
+      "id": 10,
+      "options": {"legend": {"displayMode": "list"}},
+      "targets": [
+        {
+          "expr": "rate(myapp_backend_errors_total[5m])",
+          "legendFormat": "Backend errors: {{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Backend Errors/sec",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1,"w": 24,"x": 0,"y": 15},
+      "id": 11,
+      "panels": [],
+      "title": "Docker Container Resources",
+      "type": "row"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color":{"mode":"palette-classic"},"unit":"percent"}},
+      "gridPos": {"h": 8,"w": 12,"x": 0,"y": 16},
+      "id": 12,
+      "options": {"legend":{"displayMode":"list"}},
+      "targets": [
+        {
+          "expr": "avg(rate(container_cpu_usage_seconds_total{image!=\"\",name!=\"\"}[5m]) * 100) by (name)",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Container CPU Usage (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color":{"mode":"palette-classic"},"unit":"bytes"}},
+      "gridPos": {"h": 8,"w": 12,"x": 12,"y": 16},
+      "id": 13,
+      "options": {"legend":{"displayMode":"list"}},
+      "targets": [
+        {
+          "expr": "avg(container_memory_usage_bytes{image!=\"\",name!=\"\"}) by (name)",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Container Memory Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color":{"mode":"palette-classic"},"unit":"short"}},
+      "gridPos": {"h": 8,"w": 12,"x": 0,"y": 24},
+      "id": 14,
+      "options": {"legend":{"displayMode":"list"}},
+      "targets": [
+        {
+          "expr": "max(container_restart_count{image!=\"\",name!=\"\"}) by (name)",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Container Restarts",
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 27,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [
     "docker",
@@ -972,6 +318,6 @@
   "timepicker": {},
   "timezone": "",
   "title": "Docker Swarm Infrastructure Monitoring",
-  "uid": "docker-swarm-{{ ansible_date_time.epoch }}",
+  "uid": "docker-swarm",
   "version": 1
 }
