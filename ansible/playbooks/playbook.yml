@@ -235,7 +235,7 @@
 
     - name: Copie le script SQL sur le noeud porteur DB
       copy:
-        src: "{{ local_directory }}/database/mysql/init/sneakerportfolio.sql"
+        src: "{{ playbook_dir }}/../../database/mysql/init/sneakerportfolio.sql"
         dest: /tmp/sneakerportfolio.sql
         owner: "{{ ssh_user }}"
         group: "{{ ssh_user }}"
