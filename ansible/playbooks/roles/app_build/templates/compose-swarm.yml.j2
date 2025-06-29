@@ -113,6 +113,9 @@ services:
         - "traefik.http.routers.backend.entrypoints=web,websecure"
         - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
         - "traefik.docker.network=traefik-public"
+        - "prometheus.scrape=true"
+        - "prometheus.port=5000"
+        - "prometheus.path=/metrics"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:{{ backend_port }}/health"]
       interval: 30s
