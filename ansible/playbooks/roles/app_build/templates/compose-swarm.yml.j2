@@ -179,6 +179,7 @@ services:
     networks:
       - monitoring_network
       - traefik-public
+      - app_network
     deploy:
       placement:
         constraints:

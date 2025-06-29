@@ -15,46 +15,15 @@ scrape_configs:
     metrics_path: /metrics
 
   # Node Exporter on all servers
-  {# - job_name: 'node-exporter'
+  - job_name: 'node-exporter'
     static_configs:
       - targets: ['node-exporter:9100']
-    metrics_path: /metrics #}
-
-  - job_name: 'node-exporter'
-    dns_sd_configs:
-      - names:
-          - 'tasks.projet-devops-gle_node-exporter'
-        type: 'A'
-        port: 9100
     metrics_path: /metrics
-
-  # Docker Swarm services discovery
-  - job_name: 'docker-swarm'
-    dockerswarm_sd_configs:
-      - host: unix:///var/run/docker.sock
-        role: services
-    relabel_configs:
-      - source_labels: [__meta_dockerswarm_service_label_prometheus_scrape]
-        action: keep
-        regex: true
-      - source_labels: [__meta_dockerswarm_service_label_prometheus_port]
-        action: replace
-        target_label: __address__
-        regex: (.+)
-        replacement: ${1}
 
   # Application specific metrics
-  {# - job_name: 'myapp-backend'
+  - job_name: 'myapp-backend'
     static_configs:
       - targets: ['backend:5000']
-    metrics_path: /metrics
-    scrape_interval: 30s #}
-  - job_name: 'myapp-backend'
-    dns_sd_configs:
-      - names:
-          - 'tasks.projet-devops-gle_backend'
-        type: 'A'
-        port: 5000
     metrics_path: /metrics
     scrape_interval: 30s
 
