@@ -48,6 +48,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp-ssh-key
           chmod 600 ~/.ssh/gcp-ssh-key
+          echo "${{ secrets.GCP_SSH_PUBLIC_KEY }}" > ~/.ssh/gcp-ssh-key.pub
+          chmod 644 ~/.ssh/gcp-ssh-key.pub
 
       - name: Configure SSH for Bastion & Private Access
         run: |
@@ -65,4 +67,5 @@ jobs:
           ANSIBLE_CONFIG: ansible/ansible.cfg
           VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
           GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+          GCP_SSH_PUBLIC_KEY: ${{ secrets.GCP_SSH_PUBLIC_KEY}}
 
