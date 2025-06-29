@@ -45,7 +45,7 @@
   when: inventory_hostname == groups['swarm_managers'][0]
 
 - name: Copy Docker Swarm dashboard
-  template:
+  copy:
     src: templates/docker-swarm-dashboard.json.j2
     dest: /opt/monitoring/grafana/dashboards/docker-swarm.json
     owner: "{{ ssh_user }}"
