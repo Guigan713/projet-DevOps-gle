@@ -179,7 +179,7 @@
     - name: Build et push l'image Docker Backend
       community.docker.docker_image:
         build:
-          path: "./backend"
+          path: "{{ playbook_dir }}/../../backend"
         name: guigan713/backend
         tag: "{{ deploy_version }}"
         push: true
@@ -188,7 +188,7 @@
     - name: Build et push l'image Docker Frontend
       community.docker.docker_image:
         build:
-          path: "./frontend"
+          path: "{{ playbook_dir }}/../../frontend"
         name: guigan713/frontend
         tag: "{{ deploy_version }}"
         push: true
