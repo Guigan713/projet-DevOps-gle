@@ -44,12 +44,6 @@
     mode: '0644'
   when: inventory_hostname == groups['swarm_managers'][0]
 
-- name: Check if Docker Swarm dashboard exists
-  stat:
-    path: /opt/monitoring/grafana/dashboards/docker-swarm.json
-  register: dashboard_exists
-  when: inventory_hostname == groups['swarm_managers'][0]
-
 - name: Copy Docker Swarm dashboard
   template:
     src: templates/docker-swarm-dashboard.json.j2
@@ -57,7 +51,5 @@
     owner: "{{ ssh_user }}"
     group: "{{ ssh_user }}"
     mode: '0644'
-    force: no
   when: 
     - inventory_hostname == groups['swarm_managers'][0]
-    - not dashboard_exists.stat.exists

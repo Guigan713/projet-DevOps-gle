@@ -139,7 +139,7 @@
       },
       "targets": [
         {
-          "expr": "count(count by (service_name) (up{job=~\"docker-swarm|projet-devops-gle_backend\"} == 1))",
+          "expr": "count(count by (service_name) (up{job=~\"docker-swarm|myapp_backend\"} == 1))",
           "interval": "",
           "legendFormat": "Running Services",
           "refId": "A"
