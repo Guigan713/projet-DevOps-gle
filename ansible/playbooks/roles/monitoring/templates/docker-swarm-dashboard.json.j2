@@ -29,7 +29,7 @@
       },
       "id": 2,
       "panels": [],
-      "title": "Docker Swarm Overview",
+      "title": "Cluster Overview",
       "type": "row"
     },
     {
@@ -52,7 +52,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 1
       },
@@ -74,8 +74,8 @@
       },
       "targets": [
         {
-          "expr": "count by (service_name) (up{job=\"docker-swarm-services\"})",
-          "legendFormat": "{{service_name}}",
+          "expr": "count by (job) (up)",
+          "legendFormat": "{{job}}",
           "refId": "A"
         }
       ],
@@ -108,8 +108,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 1
       },
       "id": 6,
@@ -126,7 +126,7 @@
       "targets": [
         {
           "expr": "count(up{job=\"node-exporter\"})",
-          "legendFormat": "Total Nodes",
+          "legendFormat": "Active Nodes",
           "refId": "A"
         }
       ],
@@ -159,8 +159,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 6,
-        "x": 18,
+        "w": 8,
+        "x": 16,
         "y": 1
       },
       "id": 7,
@@ -176,7 +176,7 @@
       },
       "targets": [
         {
-          "expr": "count(up{job=\"myapp-backend\"})",
+          "expr": "count(up{job=\"backend\"})",
           "legendFormat": "Backend Instances",
           "refId": "A"
         }
@@ -195,7 +195,7 @@
       },
       "id": 8,
       "panels": [],
-      "title": "Resource Usage",
+      "title": "System Metrics",
       "type": "row"
     },
     {
@@ -444,12 +444,12 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{job=\"myapp-backend\"}[1m])) by (instance)",
+          "expr": "sum(rate(http_requests_received_total{job=\"backend\"}[1m])) by (instance)",
           "legendFormat": "Requests - {{instance}}",
           "refId": "A"
         }
       ],
-      "title": "HTTP Requests Rate",
+      "title": "Backend Request Rate",
       "type": "timeseries"
     },
     {
@@ -524,12 +524,12 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"myapp-backend\"}[1m])) by (le, instance))",
-          "legendFormat": "P95 Latency - {{instance}}",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"backend\"}[1m])) by (le))",
+          "legendFormat": "P95 Latency",
           "refId": "A"
         }
       ],
-      "title": "Request Latency (P95)",
+      "title": "Backend Request Latency (P95)",
       "type": "timeseries"
     },
     {
@@ -618,7 +618,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(traefik_service_requests_total[1m])) by (service)",
+          "expr": "sum(rate(traefik_service_requests_total{job=\"traefik\"}[1m])) by (service)",
           "legendFormat": "Requests - {{service}}",
           "refId": "A"
         }
@@ -698,7 +698,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(traefik_service_request_duration_seconds_bucket[1m])) by (le, service))",
+          "expr": "histogram_quantile(0.95, sum(rate(traefik_service_request_duration_seconds_bucket{job=\"traefik\"}[1m])) by (le, service))",
           "legendFormat": "P95 Latency - {{service}}",
           "refId": "A"
         }
