@@ -28,7 +28,7 @@ mkdir -p ../ansible/inventories
 
 # Génération du fichier INI
 cat > "$INVENTORY_FILE" << INI_END
-# ===== INVENTAIRE DOCKER SWARM =====
+# INVENTAIRE DOCKER SWARM
 
 # Variables globales
 [all:vars]

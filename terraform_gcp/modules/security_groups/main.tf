@@ -51,28 +51,6 @@ resource "google_compute_firewall" "swarm_internal_communication" {
   target_tags = ["swarm-node"]
 }
 
-# Ports spécifiques Docker Swarm
-resource "google_compute_firewall" "swarm_cluster_ports" {
-  name    = "swarm-cluster-ports"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["2377", "7946"]  # Cluster management + node communication
-  }
-  
-  allow {
-    protocol = "udp"
-    ports    = ["4789", "7946"]  # Overlay network + node communication
-  }
-
-  source_ranges = [
-    var.public_subnet_cidr,
-    var.private_subnet_cidr
-  ]
-  target_tags = ["swarm-node"]
-}
-
 # HTTP/HTTPS externe
 resource "google_compute_firewall" "swarm_web_ingress" {
   name    = "swarm-web-ingress"

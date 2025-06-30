@@ -17,8 +17,15 @@ scrape_configs:
   # Node Exporter on all servers
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets:
+{% for host in groups['swarm_nodes'] %}
+          - '{{ hostvars[host]["ansible_host"] }}:9100'
+{% endfor %}
     metrics_path: /metrics
+  {# - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    metrics_path: /metrics #}
 
   # Application specific metrics
   - job_name: 'myapp-backend'

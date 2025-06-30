@@ -4,7 +4,6 @@ output "swarm_firewall_rules" {
     google_compute_firewall.swarm_manager_ssh.name,
     google_compute_firewall.swarm_internal_ssh.name,
     google_compute_firewall.swarm_internal_communication.name,
-    google_compute_firewall.swarm_cluster_ports.name,
     google_compute_firewall.swarm_web_ingress.name,
     google_compute_firewall.swarm_monitoring.name,
     google_compute_firewall.swarm_outbound.name,

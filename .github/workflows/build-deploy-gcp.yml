@@ -1,13 +1,10 @@
 name: Deploy projet DevOps
 
 on:
-  # workflow_run:
-  #   workflows: ["Test Workflow"]
-  #   types:
-  #     - completed
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Test Workflow"]
+    types:
+      - completed
 
 jobs:
   deploy-ansible:
@@ -31,9 +28,6 @@ jobs:
       - name: Install Ansible requirements
         run: |
           ansible-galaxy collection install community.docker
-
-      - name: Vérification présence ssh-config
-        run: ls -lh ansible/ssh-config
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1

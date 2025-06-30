@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - test
+      - main
 
 jobs:
   test-and-analyze:
@@ -13,7 +13,7 @@ jobs:
 
     services:
       mysql:
-        image: mysql:9
+        image: mysql:8
         env:
           MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
           MYSQL_DATABASE: ${MYSQL_DATABASE}

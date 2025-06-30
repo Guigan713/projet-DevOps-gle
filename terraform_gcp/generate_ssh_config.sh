@@ -42,7 +42,7 @@ Host *
     LogLevel ERROR
     ServerAliveInterval 60
 
-# ===== BASTION / LEADER =====
+# BASTION / LEADER
 Host swarm-bastion swarm-leader manager-1
     HostName $BASTION_IP
     Port 22
@@ -52,7 +52,7 @@ Host swarm-bastion swarm-leader manager-1
     LocalForward 3000 localhost:3000
     LocalForward 9000 localhost:9000
 
-# ===== MANAGERS =====
+# MANAGERS
 SSH_START
 
 # Ajouter managers
@@ -70,7 +70,7 @@ done
 # Section workers
 cat >> "$SSH_CONFIG_FILE" << SSH_WORKERS_SECTION
 
-# ===== WORKERS (via bastion) =====
+# WORKERS (via bastion)
 SSH_WORKERS_SECTION
 
 # Ajouter workers
@@ -89,7 +89,7 @@ done
 # Aliases finaux
 cat >> "$SSH_CONFIG_FILE" << SSH_ALIASES
 
-# ===== ALIASES UTILES =====
+# ALIASES UTILES
 Host swarm-deploy
     HostName $BASTION_IP
     Port 22
