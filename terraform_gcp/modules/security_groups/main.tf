@@ -79,6 +79,22 @@ resource "google_compute_firewall" "swarm_monitoring" {
   target_tags   = ["swarm-manager"]
 }
 
+resource "google_compute_firewall" "swarm_node_exporter" {
+  name    = "swarm-node-exporter"
+  network = var.vpc_name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["9100"]
+  }
+
+  source_ranges = [
+    var.private_subnet_cidr,
+    var.public_subnet_cidr,
+  ]
+  target_tags   = ["swarm-node"]
+}
+
 # Egress
 resource "google_compute_firewall" "swarm_outbound" {
   name      = "swarm-outbound"
