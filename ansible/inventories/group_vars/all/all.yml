@@ -31,12 +31,6 @@ local_directory: "/home/guillaume/projet-DevOps-gle"
 project_root: /home/guillaume/projet-DevOps-gle
 admin_ip: "92.141.143.116"
 
-# db_name: "sneakerportfolio"
-# db_user: "guillaume"
-# db_host: "database"
-# db_port: "3306"
-
-
 # Configuration sécurité
 security:
   max_upload_size: "50M"
