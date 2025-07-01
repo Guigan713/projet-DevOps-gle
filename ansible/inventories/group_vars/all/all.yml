@@ -36,7 +36,6 @@ security:
   max_upload_size: "50M"
   enable_subdomains: false
 
-
 # Node Exporter configuration
 node_exporter_port: 9100
 node_exporter_enabled: true
@@ -44,7 +43,6 @@ node_exporter_enabled: true
 # Monitoring volumes
 prometheus_data_volume: "{{ project_name }}_prometheus_data"
 grafana_data_volume: "{{ project_name }}_grafana_data"
-
 
 # Traefik configuration
 traefik_version: "v3.0"
@@ -79,7 +77,6 @@ backend_cors_origins:
 app_uploads_volume: "{{ project_name }}_uploads"
 app_static_volume: "{{ project_name }}_static"
 app_media_volume: "{{ project_name }}_media"
-
 
 # Firewall configuration
 firewall_enabled: true
