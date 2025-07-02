@@ -5,7 +5,7 @@ resource "null_resource" "generate_swarm_config" {
     swarm_workers  = join(",", module.instances.swarm_worker_ips)
     swarm_lb_ip    = module.instances.swarm_lb_ip
     leader_ip      = module.instances.swarm_leader_ip
-    leader_public  = module.instances.swarm_leader_public_ip
+    bastion_public_ip = module.instances.bastion_public_ip
     always_run     = timestamp()
   }
 

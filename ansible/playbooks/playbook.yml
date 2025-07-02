@@ -130,8 +130,8 @@
   tags:
     - mysql
 
-# Installation monitoring
-- name: Install monitoring on all servers
+# Installation node-exporter
+- name: Install node-exporter on all servers
   hosts: all
   become: yes
   roles:

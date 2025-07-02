@@ -5,6 +5,28 @@ resource "google_compute_address" "swarm_lb_ip" {
   project = var.project
 }
 
+resource "google_compute_instance" "bastion" {
+  name         = "bastion-host"
+  machine_type = "e2-micro"
+  zone         = var.zone
+  tags         = ["bastion"]
+
+  boot_disk {
+    initialize_params {
+      image = var.image
+    }
+  }
+  network_interface {
+    network             = var.vpc_id
+    subnetwork          = var.public_subnet_id
+    access_config {} 
+  }
+  metadata = {
+    ssh-keys = "deploy:${file(var.ssh_public_key_path)}"
+  }
+}
+
+
 # Swarm Managers
 resource "google_compute_instance" "swarm_manager" {
   count        = var.swarm_manager_count

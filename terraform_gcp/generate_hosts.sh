@@ -18,9 +18,9 @@ error_exit() { echo " $1" >&2; exit 1; }
 
 # Récupération des IPs
 MANAGER_IPS=$(terraform output -json swarm_manager_ips | jq -r '.[]') || error_exit "Pas d'output managers"
-WORKER_IPS=$(terraform output -json swarm_worker_ips | jq -r '.[]') || error_exit "Pas d'output workers"  
-LEADER_PUBLIC_IP=$(terraform output -json swarm_manager_public_ips | jq -r '.[0]') || error_exit "Pas d'IP publique"
+WORKER_IPS=$(terraform output -json swarm_worker_ips | jq -r '.[]') || error_exit "Pas d'output workers"
 LEADER_PRIVATE_IP=$(terraform output -raw swarm_leader_ip) || error_exit "Pas d'IP leader"
+BASTION_PUBLIC_IP=$(terraform output -raw bastion_public_ip) || error_exit "Pas d'IP publique de bastion"
 LB_IP=$(terraform output -raw swarm_load_balancer_ip) || error_exit "Pas d'IP LB"
 
 # Créer dossier
@@ -34,7 +34,7 @@ cat > "$INVENTORY_FILE" << INI_END
 [all:vars]
 ansible_user=deploy
 ansible_ssh_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ProxyJump=deploy@${LEADER_PUBLIC_IP}"
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ProxyJump=deploy@${BASTION_PUBLIC_IP}"
 
 # MANAGERS
 [swarm_managers]
@@ -43,13 +43,9 @@ INI_END
 # Ajouter les managers
 MANAGER_COUNT=1
 for ip in $MANAGER_IPS; do
-    if [ $MANAGER_COUNT -eq 1 ]; then
-        # Premier = Leader avec IP publique
-        echo "manager_${MANAGER_COUNT} ansible_host=${ip} swarm_role=manager swarm_leader=true public_ip=${LEADER_PUBLIC_IP}" >> "$INVENTORY_FILE"
-    else
-        # Autres = Followers via bastion
-        echo "manager_${MANAGER_COUNT} ansible_host=${ip} swarm_role=manager swarm_leader=false ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@${LEADER_PUBLIC_IP}'" >> "$INVENTORY_FILE"
-    fi
+    leader_option=""
+    [ "$ip" == "$LEADER_PRIVATE_IP" ] && leader_option="swarm_leader=true" || leader_option="swarm_leader=false"
+    echo "manager_${MANAGER_COUNT} ansible_host=${ip} swarm_role=manager ${leader_option}" >> "$INVENTORY_FILE"
     ((MANAGER_COUNT++))
 done
 
@@ -63,7 +59,7 @@ INI_WORKERS
 # Ajouter les workers
 WORKER_COUNT=1
 for ip in $WORKER_IPS; do
-    echo "worker_${WORKER_COUNT} ansible_host=${ip} swarm_role=worker ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyJump=deploy@${LEADER_PUBLIC_IP}'" >> "$INVENTORY_FILE"
+    echo "worker_${WORKER_COUNT} ansible_host=${ip} swarm_role=worker" >> "$INVENTORY_FILE"
     ((WORKER_COUNT++))
 done
 
@@ -82,7 +78,7 @@ swarm_workers
 manager_1
 
 [bastion]
-swarm_bastion ansible_host=${LEADER_PUBLIC_IP} private_ip=${LEADER_PRIVATE_IP} lb_ip=${LB_IP} ansible_ssh_common_args='' swarm_role=bastion
+swarm_bastion ansible_host=${BASTION_PUBLIC_IP} private_ip=${LEADER_PRIVATE_IP} lb_ip=${LB_IP} swarm_role=bastion
 INI_GROUPS
 
 echo " Inventaire INI généré: $INVENTORY_FILE"

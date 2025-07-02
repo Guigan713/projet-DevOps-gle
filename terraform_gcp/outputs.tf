@@ -3,11 +3,6 @@ output "swarm_manager_ips" {
   value       = module.instances.swarm_manager_ips
 }
 
-output "swarm_manager_public_ips" {
-  description = "Adresses IP publiques des managers Docker Swarm"
-  value       = [module.instances.swarm_leader_public_ip]
-}
-
 output "swarm_worker_ips" {
   description = "Adresses IP privées des workers Docker Swarm"
   value       = module.instances.swarm_worker_ips
@@ -18,6 +13,10 @@ output "swarm_load_balancer_ip" {
   value       = module.instances.swarm_lb_ip
 }
 
+output "bastion_public_ip" {
+  description = "Adresse IP publique du bastion (accès SSH uniquement)"
+  value       = module.instances.bastion_public_ip
+}
 
 output "swarm_leader_ip" {
   description = "IP privée du manager leader"
@@ -26,13 +25,13 @@ output "swarm_leader_ip" {
 
 # Outputs de connexion
 output "ssh_connection_manager" {
-  description = "Commande SSH pour se connecter au manager leader"
-  value       = "ssh -i ~/.ssh/gcp-ssh-key deploy@${module.instances.swarm_leader_public_ip}"
+  description = "Commande SSH pour se connecter au manager leader via le bastion"
+  value       = "ssh -i ~/.ssh/gcp-ssh-key -J deploy@${module.instances.bastion_public_ip} deploy@${module.instances.swarm_leader_ip}"
 }
 
 output "docker_swarm_status" {
-  description = "Commande pour vérifier le statut du Swarm"
-  value       = "ssh -i ~/.ssh/gcp-ssh-key deploy@${module.instances.swarm_leader_public_ip} 'sudo docker node ls'"
+  description = "Commande pour vérifier le statut du Swarm (via bastion)"
+  value       = "ssh -i ~/.ssh/gcp-ssh-key -J deploy@${module.instances.bastion_public_ip} deploy@${module.instances.swarm_leader_ip} 'sudo docker node ls'"
 }
 
 # Outputs réseau (compatibilité)

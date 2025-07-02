@@ -18,7 +18,8 @@ error_exit() { echo " $1" >&2; exit 1; }
 # Récupérer les IPs
 MANAGER_IPS=$(terraform output -json swarm_manager_ips | jq -r '.[]') || error_exit "Pas d'output managers"
 WORKER_IPS=$(terraform output -json swarm_worker_ips | jq -r '.[]') || error_exit "Pas d'output workers"
-BASTION_IP=$(terraform output -json swarm_manager_public_ips | jq -r '.[0]') || error_exit "Pas d'IP bastion"
+LEADER_IP=$(terraform output -raw swarm_leader_ip) || error_exit "Pas d'IP leader"
+BASTION_IP=$(terraform output -raw bastion_public_ip) || error_exit "Pas d'IP bastion"
 LB_IP=$(terraform output -raw swarm_load_balancer_ip 2>/dev/null) || LB_IP="$BASTION_IP"
 
 # Compter
@@ -42,48 +43,58 @@ Host *
     LogLevel ERROR
     ServerAliveInterval 60
 
-# BASTION / LEADER
-Host swarm-bastion swarm-leader manager-1
+# BASTION
+Host swarm-bastion
     HostName $BASTION_IP
     Port 22
+
+SSH_START
+
+MANAGER_IDX=1
+for ip in $MANAGER_IPS; do
+    # Bloc leader, sinon manager simple
+    if [[ "$ip" == "$LEADER_IP" ]]; then
+        cat >> "$SSH_CONFIG_FILE" << EOF
+# LEADER SWARM (manager-$MANAGER_IDX)
+Host swarm-leader manager-$MANAGER_IDX swarm-manager-$MANAGER_IDX
+    HostName $ip
+    Port 22
+    ProxyJump swarm-bastion
     LocalForward 8080 $LB_IP:80
     LocalForward 8443 $LB_IP:443
     LocalForward 9090 $LB_IP:9090
-    LocalForward 3000 localhost:3000
-    LocalForward 9000 localhost:9000
+    LocalForward 3000 127.0.0.1:3000
+    LocalForward 9000 127.0.0.1:9000
 
-# MANAGERS
-SSH_START
-
-# Ajouter managers
-MANAGER_COUNT=1
-for ip in $MANAGER_IPS; do
-    cat >> "$SSH_CONFIG_FILE" << SSH_MANAGER
-Host manager-${MANAGER_COUNT} swarm-manager-${MANAGER_COUNT}
+EOF
+    else
+        cat >> "$SSH_CONFIG_FILE" << EOF
+# AUTRE MANAGER (manager-$MANAGER_IDX)
+Host manager-$MANAGER_IDX swarm-manager-$MANAGER_IDX
     HostName $ip
     Port 22
+    ProxyJump swarm-bastion
 
-SSH_MANAGER
-    ((MANAGER_COUNT++))
+EOF
+    fi
+    ((MANAGER_IDX++))
 done
 
-# Section workers
-cat >> "$SSH_CONFIG_FILE" << SSH_WORKERS_SECTION
+# WORKERS (tous proxyjump via bastion)
+cat >> "$SSH_CONFIG_FILE" << SSH_WORKERS_HEADER
+# WORKERS
+SSH_WORKERS_HEADER
 
-# WORKERS (via bastion)
-SSH_WORKERS_SECTION
-
-# Ajouter workers
-WORKER_COUNT=1
+WORKER_IDX=1
 for ip in $WORKER_IPS; do
     cat >> "$SSH_CONFIG_FILE" << SSH_WORKER
-Host worker-${WORKER_COUNT} swarm-worker-${WORKER_COUNT}
+Host worker-${WORKER_IDX} swarm-worker-${WORKER_IDX}
     HostName $ip
     Port 22
     ProxyJump swarm-bastion
 
 SSH_WORKER
-    ((WORKER_COUNT++))
+    ((WORKER_IDX++))
 done
 
 # Aliases finaux
@@ -107,9 +118,11 @@ SSH_ALIASES
 echo " Configuration SSH générée: $SSH_CONFIG_FILE"
 echo ""
 echo " Commandes utiles:"
-echo "   ssh swarm-leader     # Manager principal"
-echo "   ssh worker-1         # Premier worker"
-echo "   ssh swarm-deploy     # Avec tunnels"
+echo "  ssh swarm-leader         # Vers le leader (via bastion)"
+echo "  ssh manager-2            # Vers un autre manager"
+echo "  ssh worker-1             # Premier worker"
+echo "  ssh swarm-bastion        # Accès direct sur le bastion"
+echo "  ssh swarm-deploy         # Avec tunnels pour applicatifs"
 echo ""
 echo "Tunnels disponibles (ssh swarm-deploy):"
 echo "   http://localhost:8080  # Applications"

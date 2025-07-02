@@ -1,14 +1,38 @@
-resource "google_compute_firewall" "swarm_manager_ssh" {
-  name    = "swarm-manager-ssh"
+resource "google_compute_firewall" "swarm_lb_to_nodes" {
+  name    = "swarm-lb-to-nodes"
+  network = var.vpc_name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "443"]
+  }
+  # Source = subnet privé (où est le LB interne OU [optionnel] l'IP interne du LB si connue)
+  source_ranges = [var.public_subnet_cidr, var.private_subnet_cidr]
+  target_tags   = ["swarm-node"]
+}
+
+resource "google_compute_firewall" "ssh_bastion_from_admin" {
+  name          = "ssh-bastion-admin"
+  network       = var.vpc_name
+  allow {
+    protocol    = "tcp"
+    ports       = ["22"]
+  }
+
+  source_ranges = ["${var.mon_ip}/32"]
+  target_tags   = ["bastion"]
+}
+
+resource "google_compute_firewall" "bastion_ssh" {
+  name    = "bastion-ssh-to-nodes"
   network = var.vpc_name
 
   allow {
     protocol = "tcp"
     ports    = ["22"]
   }
-
-  source_ranges = ["${var.mon_ip}/32"]
-  target_tags   = ["swarm-manager"]
+  source_tags = ["bastion"]
+  target_tags = ["swarm-node"]
 }
 
 # SSH from managers to all nodes (bastion)
@@ -49,20 +73,6 @@ resource "google_compute_firewall" "swarm_internal_communication" {
     var.private_subnet_cidr
   ]
   target_tags = ["swarm-node"]
-}
-
-# HTTP/HTTPS externe
-resource "google_compute_firewall" "swarm_web_ingress" {
-  name    = "swarm-web-ingress"
-  network = var.vpc_name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["80", "443"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["swarm-manager"]  # Load balancer sur managers
 }
 
 # Monitoring accès externe (Grafana, Prometheus via Swarm)

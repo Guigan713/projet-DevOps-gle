@@ -13,14 +13,14 @@ output "swarm_lb_ip" {
   value = google_compute_address.swarm_lb_ip.address
 }
 
+output "bastion_public_ip" {
+  description = "Adresse IP publique du bastion (SSH/admin)"
+  value       = google_compute_instance.bastion.network_interface[0].access_config[0].nat_ip
+}
+
 output "swarm_leader_ip" {
   description = "IP du premier manager"
   value = google_compute_instance.swarm_manager[0].network_interface[0].network_ip
-}
-
-output "swarm_leader_public_ip" {
-  description = "IP publique du leader (pour SSH)"
-  value = google_compute_instance.swarm_manager[0].network_interface[0].access_config[0].nat_ip
 }
 
 output "swarm_cluster_info" {
@@ -38,5 +38,6 @@ output "swarm_cluster_info" {
     }
     leader_ip = google_compute_instance.swarm_manager[0].network_interface[0].network_ip
     lb_ip     = google_compute_address.swarm_lb_ip.address
+    bastion_ip = google_compute_instance.bastion.network_interface[0].access_config[0].nat_ip
   }
 }
