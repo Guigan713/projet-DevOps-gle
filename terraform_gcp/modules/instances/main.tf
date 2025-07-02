@@ -13,6 +13,7 @@ resource "google_compute_instance" "swarm_manager" {
   zone         = var.zone
 
   can_ip_forward = true
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {
@@ -23,7 +24,7 @@ resource "google_compute_instance" "swarm_manager" {
 
   network_interface {
     network    = var.vpc_id
-    subnetwork = var.public_subnet_id
+    subnetwork = var.private_subnet_id
     
     dynamic "access_config" {
       for_each = count.index == 0 ? [1] : []
@@ -46,6 +47,8 @@ resource "google_compute_instance" "swarm_worker" {
   name         = "swarm-worker-${count.index + 1}"
   machine_type = var.worker_machine_type
   zone         = var.zone
+
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {
