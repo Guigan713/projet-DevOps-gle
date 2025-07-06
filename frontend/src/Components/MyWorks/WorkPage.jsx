@@ -10,7 +10,7 @@ function WorkPage({snap}) {
         <div className="workpage-container">
             <img
                 className="workpage-img"
-                src={`${API_URL}/images/${snap.shoe_img}`}
+                src={`${API_URL}/api/images/${snap.shoe_img}`}
                 alt="pics"
             />
             <div className="workpage-item-info">

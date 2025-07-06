@@ -16,8 +16,9 @@ const register = new promClient.Registry();
 
 app.use(cors({
     origin: [
-        'https://projet-devops-gle.fr',
-        'http://localhost:3000'
+        'http://localhost:3000',
+        'http://sneakerportfolio.eu',
+        'https://sneakerportfolio.eu'
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
@@ -46,16 +47,11 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.status(200).send('je suis dans le truc /');
-});
-
-app.use(express.static(path.join(__dirname, 'build')));
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-        res.status(404).send('API route not found');
-        return;
-    }
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+    res.status(200).json({ 
+        message: 'Sneaker Portfolio API', 
+        version: '1.0.0',
+        endpoints: ['/api/pics', '/api/home', '/api/about', '/api/aboutme', '/api/snaps']
+    });
 });
 
 app.listen(port, () => {

@@ -1,47 +1,43 @@
 ---
-- name: Installer Certbot + Google Cloud plugin
-  apt:
-    name:
-      - certbot
-      - python3-certbot-dns-google
-    state: present
-    update_cache: yes
-  become: true
+- name: Récupérer l'IP du Load Balancer depuis dns_setup
+  set_fact:
+    lb_ip: "{{ hostvars['localhost']['lb_ip'] | default(hostvars[groups['swarm_managers'][0]]['lb_ip']) | default(lookup('env','LB_IP')) }}"
 
 - name: Vérifier la propagation DNS des sous-domaines (Google resolver)
-  shell: "dig +short {{ item.subdomain }}.{{ domain_name }} @8.8.8.8 A"
-  delegate_to: localhost
-  register: dns_results
+  shell: "dig +short {{ service.subdomain }}.{{ domain_name }} @8.8.8.8 A"
   loop: "{{ dns_services }}"
-  when: item.enabled
-  changed_when: false
-
-- name: Afficher l'état DNS des services
-  debug:
-    msg: >
-      "{{ item.subdomain }}.{{ domain_name }} pointe vers
-        {{ dns_results.results[loop.index0].stdout | default('aucune IP') }}"
-  loop: "{{ dns_services }}"
-  when: item.enabled
   loop_control:
-    loop_var: item
+    loop_var: service
+  when:
+    - inventory_hostname == groups['swarm_managers'][0]
+    - service.enabled
+  register: dns_check
+  changed_when: false
+  delegate_to: localhost
+  run_once: true
 
-- name: Détecter l'IP du Load Balancer depuis Hostvars
-  set_fact:
-    lb_ip: "{{ hostvars[inventory_hostname]['lb_ip'] | default(lookup('env','LB_IP')) }}"
+- name: Attendre la propagation DNS si nécessaire
+  ansible.builtin.pause:
+    seconds: 30
+    prompt: "Attente propagation DNS pour {{ dns_result.service.subdomain }}.{{ domain_name }}"
+  loop: "{{ dns_check.results }}"
+  loop_control:
+    loop_var: dns_result
+  when:
+    - not dns_result.skipped | default(false)
+    - dns_result.service.enabled
+    - dns_result.stdout | default('') != lb_ip
+    - dns_result.stdout | default('') != ''
+  delegate_to: localhost
+  run_once: true
 
-- name: Afficher l'IP du Load Balancer pour info
-  debug: var=lb_ip
-
-- name: Générer le certificat wildcard via DNS Google
-  shell: >
-    certbot certonly --dns-google
-      --dns-google-credentials "/opt/gcp-service-account.json"
-      --dns-google-propagation-seconds 120
-      -d *.{{ domain_name }}
-      -d {{ domain_name }}
-      --email {{ ssl_email }}
-      --agree-tos --non-interactive
-  args:
-    creates: "/etc/letsencrypt/live/{{ domain_name }}/fullchain.pem"
-  when: ssl_enabled|bool
+- name: Copier la clé GCP DNS Challenge
+  copy:
+    src: "{{ gcp_credentials_file }}"
+    dest: "{{ app_directory }}/gcp-service-account.json"
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0600'
+  become: true
+  when: gcp_credentials_file is defined and gcp_credentials_file | length > 0
+  ignore_errors: false

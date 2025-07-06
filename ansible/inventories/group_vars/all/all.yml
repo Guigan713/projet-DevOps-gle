@@ -1,162 +1,52 @@
 # Variables globales partagées
 project_name: "projet-devops-gle"
 app_version: "v1.0.0"
-app_name: "{{ project_name }}"
-app_directory: "/opt/{{ app_name }}"
-docker_data_dir: "/var/lib/docker"
+app_directory: "/opt/{{ project_name }}"
 app_environment: production
 ssh_user: "deploy"
-ssh_port: 22
 ssh_public_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/gcp-ssh-key.pub') }}"
 # ssh_public_key: /home/guillaume/.ssh/gcp-ssh-key.pub
 gcp_credentials_file: "/home/guillaume/projet-DevOps-gle/terraform_gcp/credentials/gcp-sa-key.json"
 gcp_swarm_sa_json: "{{ app_directory }}/gcp-service-account.json"
 
-domain_name: "projet-devops-gle.fr"
-api_domain: "api.{{ domain_name }}"
-grafana_domain: "grafana.{{ domain_name }}"
-prometheus_domain: "prometheus.{{ domain_name }}"
-traefik_domain: "traefik.{{ domain_name }}"
+domain_name: "sneakerportfolio.eu"
+api_domain: "api.sneakerportfolio.eu"
+grafana_domain: "grafana.sneakerportfolio.eu"
+prometheus_domain: "prometheus.sneakerportfolio.eu"
+traefik_domain: "traefik.sneakerportfolio.eu"
 
 project_id: "geometric-watch-455507-m6"
 swarm_lb_ip: "{{ hostvars[groups['swarm_managers'][0]]['ansible_default_ipv4']['address'] }}"
 
 docker_hub_username: "guigan713"
 docker_hub_password: "{{ vault_docker_hub_password }}"
-frontend_image: "{{ docker_hub_username}}/frontend"
-backend_image: "{{ docker_hub_username}}/backend" 
 
-local_directory: "/home/guillaume/projet-DevOps-gle"
-
-project_root: /home/guillaume/projet-DevOps-gle
-admin_ip: "92.141.143.116"
-
-# Configuration sécurité
-security:
-  max_upload_size: "50M"
-  enable_subdomains: false
-
-# Node Exporter configuration
 node_exporter_port: 9100
-node_exporter_enabled: true
+node_exporter_version: "1.7.0"
+prometheus_retention_time: "15d"
 
-# Monitoring volumes
-prometheus_data_volume: "{{ project_name }}_prometheus_data"
-grafana_data_volume: "{{ project_name }}_grafana_data"
+db_host: "database"
+db_port: 3306
+db_name: "sneakerportfolio"
+db_user: "guillaume"
+db_service_name: "{{ project_name }}_database"
 
-# Traefik configuration
-traefik_version: "v3.0"
-traefik_dashboard_port: 8080
-traefik_dashboard_enabled: true
-traefik_api_dashboard: true
-traefik_api_debug: false
+db_backup_enabled: true
+db_backup_schedule: "0 2 * * *"  # Tous les jours à 2h du matin
+db_backup_retention_days: 30
 
-# SSL/TLS configuration
-ssl_enabled: false
-ssl_provider: "letsencrypt"  # ou "selfsigned"
-ssl_email: "admin@projet-devops-gle.fr"
-acme_email: "deploy@projet-devops-gle.fr"
+environment: "production"
+api_rate_limit: "100"
 
-# Traefik volumes
-traefik_data_volume: "{{ project_name }}_traefik_data"
+frontend_replicas: 2
+backend_replicas: 2
 
-# Frontend configuration
-frontend_port: 7000
-frontend_build_env: "production"
-frontend_api_url: "http://{{ api_domain }}"
+bucket_name: "{{ project_name }}-backups"
+mysql_root_password: "{{ vault_db_root_password }}"
 
-# Backend configuration
-backend_port: 5000
-backend_debug: false
-backend_log_level: "INFO"
 backend_cors_origins: 
   - "http://{{ domain_name }}"
   - "https://{{ domain_name }}"
 
-# Application volumes
-app_uploads_volume: "{{ project_name }}_uploads"
-app_static_volume: "{{ project_name }}_static"
-app_media_volume: "{{ project_name }}_media"
 
-# Firewall configuration
-firewall_enabled: true
-firewall_allowed_ports:
-  - "22"      # SSH
-  - "80"      # HTTP
-  - "443"     # HTTPS
-  - "2377"    # Docker Swarm
-  - "7946"    # Docker Swarm
-  - "4789"    # Docker Overlay
-
-# Docker daemon configuration
-docker_daemon_options:
-  log-driver: "json-file"
-  log-opts:
-    max-size: "10m"
-    max-file: "3"
-  storage-driver: "overlay2"
-
-# Resource limits
-frontend_resources:
-  limits:
-    cpus: "0.5"
-    memory: "512M"
-  reservations:
-    cpus: "0.25"
-    memory: "256M"
-
-backend_resources:
-  limits:
-    cpus: "1.0"
-    memory: "1G"
-  reservations:
-    cpus: "0.5"
-    memory: "512M"
-
-database_resources:
-  limits:
-    cpus: "2.0"
-    memory: "2G"
-  reservations:
-    cpus: "1.0"
-    memory: "1G"
-
-# Scaling configuration
-frontend_replicas: 2
-backend_replicas: 2
-database_replicas: 1
-
-# Health check configuration
-healthcheck_enabled: true
-healthcheck_interval: "30s"
-healthcheck_timeout: "10s"
-healthcheck_retries: 3
-healthcheck_start_period: "30s"
-
-# Application health endpoints
-frontend_health_endpoint: "/health"
-backend_health_endpoint: "/api/health"
-
-logging_driver: "json-file"
-logging_max_size: "10m"
-logging_max_file: "3"
-
-
-# URLs calculées automatiquement
-frontend_url: "http://{{ domain_name }}"
-backend_url: "http://{{ api_domain }}"
-grafana_url: "http://{{ grafana_domain }}"
-prometheus_url: "http://{{ prometheus_domain }}"
-traefik_url: "http://{{ traefik_domain }}"
-
-# Chemins calculés
-app_build_dir: "{{ app_directory }}/build"
-app_volumes_dir: "{{ app_directory }}/volumes"
-app_config_dir: "{{ app_directory }}/config"
-app_logs_dir: "{{ app_directory }}/logs"
-
-# Services configuration
-create_api_subdomain: true
-create_admin_subdomain: false
-
-lb_ip: "{{ swarm_load_balancer_ip }}"
+deploy_version: "{{ app_version }}"

@@ -52,7 +52,7 @@
 
 - name: Trouver mon stack
   set_fact:
-    my_stack: "{{ stack_info.results | selectattr('Name', 'equalto', 'myapp') | list }}"
+    my_stack: "{{ stack_info.results | selectattr('Name', 'equalto', project_name) | list }}"
 
 - name: Display stack services count
   debug:
@@ -61,7 +61,7 @@
 
 - name: Vérifier tous les services
   community.docker.docker_swarm_service_info:
-    name: "myapp_{{ item }}"
+    name: "{{ project_name }}_{{ item }}"
   register: all_services_info
   loop: "{{ app_services }}"
   changed_when: false
@@ -70,14 +70,3 @@
   fail:
     msg: "Il manque : {{ app_services | reject('in', all_services_info.results | selectattr('service', 'defined') | map(attribute='invocation.module_args.name') | list) | list }}"
   when: (all_services_info.results | selectattr('service', 'defined') | list | length) != (app_services | length)
-
-- name: Display service endpoints
-  debug:
-    msg: |
-      Application deployed successfully!
-      
-      Frontend: http://{{ ansible_host }}
-      Backend API: http://{{ ansible_host }}/api
-      Grafana: http://{{ ansible_host }}:3000 (admin/{{ grafana_password }})
-      Prometheus: http://{{ ansible_host }}:9090
-      Traefik Dashboard: http://{{ ansible_host }}:8080

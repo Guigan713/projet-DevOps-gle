@@ -9,8 +9,6 @@ app_services:
 
 project_name: "projet-devops-gle"
 app_directory: "/opt/{{ app_name }}"
-app_name: "{{ project_name }}"
-
 gcp_credentials_file: "/home/guillaume/projet-DevOps-gle/terraform_gcp/credentials/gcp-sa-key.json"
 gcp_swarm_sa_json: "{{ app_directory }}/gcp-service-account.json"
 
@@ -31,7 +29,7 @@ traefik_domain: "traefik.{{ domain_name }}"
 grafana_admin_user: "admin"
 prometheus_retention_time: "15d"
 
-domain_name: "projet-devops-gle.fr"
+domain_name: "sneakerportfolio.eu"
 app_environment: production
 app_version: "v1.0.0"
 

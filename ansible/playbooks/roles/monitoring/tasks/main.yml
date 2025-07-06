@@ -14,8 +14,6 @@
     - /opt/monitoring/grafana/dashboards
     - /opt/monitoring/grafana/dashboards/app
     - /opt/monitoring/grafana/dashboards/swarm
-  when: inventory_hostname == groups['swarm_managers'][0]
-
 
 - name: Generate Prometheus configuration
   template:
@@ -45,7 +43,7 @@
   when: inventory_hostname == groups['swarm_managers'][0]
 
 - name: Copy Docker Swarm dashboard
-  copy:
+  template:
     src: templates/docker-swarm-dashboard.json.j2
     dest: /opt/monitoring/grafana/dashboards/docker-swarm.json
     owner: "{{ ssh_user }}"
@@ -53,3 +51,43 @@
     mode: '0644'
   when: 
     - inventory_hostname == groups['swarm_managers'][0]
+
+- name: Copy Node Exporter dashboard
+  template:
+    src: templates/node-exporter-dashboard.json.j2
+    dest: /opt/monitoring/grafana/dashboards/node-exporter.json
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0644'
+  when: 
+    - inventory_hostname == groups['swarm_managers'][0]
+
+- name: Fetch files from manager_1 for synchronization
+  fetch:
+    src: "/opt/monitoring/{{ item }}"
+    dest: "/tmp/monitoring-sync/{{ item }}"
+    flat: yes
+  loop:
+    - "prometheus/prometheus.yml"
+    - "grafana/provisioning/datasources/prometheus.yml"
+    - "grafana/provisioning/dashboards/default.yml"
+    - "grafana/dashboards/docker-swarm.json"
+    - "grafana/dashboards/node-exporter.json"
+  when: inventory_hostname == groups['swarm_managers'][0]
+
+- name: Copy files to other managers
+  copy:
+    src: "/tmp/monitoring-sync/{{ item }}"
+    dest: "/opt/monitoring/{{ item }}"
+    owner: "{{ ssh_user }}"
+    group: "{{ ssh_user }}"
+    mode: '0644'
+  loop:
+    - "prometheus/prometheus.yml"
+    - "grafana/provisioning/datasources/prometheus.yml"
+    - "grafana/provisioning/dashboards/default.yml"
+    - "grafana/dashboards/docker-swarm.json"
+    - "grafana/dashboards/node-exporter.json"
+  when: 
+    - inventory_hostname in groups['swarm_managers']
+    - inventory_hostname != groups['swarm_managers'][0]

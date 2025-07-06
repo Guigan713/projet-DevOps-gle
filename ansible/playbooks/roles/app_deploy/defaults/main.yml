@@ -6,3 +6,4 @@ app_services:
   - database
   - prometheus
   - grafana
+  - node-exporter

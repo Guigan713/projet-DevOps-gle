@@ -145,31 +145,6 @@ variable "backup_retention_days" {
   default     = 30
 }
 
-# DNS vars
-variable "domain_name" {
-  description = "Nom de domaine"
-  type        = string
-  default     = ""
-}
-
-variable "enable_dns" {
-  description = "Activer la configuration DNS"
-  type        = bool
-  default     = false
-}
-
-variable "create_api_subdomain" {
-  description = "Créer un sous-domaine api"
-  type        = bool
-  default     = false
-}
-
-# variable "create_admin_subdomain" {
-#   description = "Créer un sous-domaine admin"
-#   type        = bool
-#   default     = false
-# }
-
 # Variables d'environnement
 variable "environment" {
   description = "Environnement de déploiement"
@@ -179,4 +154,13 @@ variable "environment" {
     condition     = contains(["development", "staging", "production"], var.environment)
     error_message = "L'environnement doit être development, staging ou production."
   }
+}
+
+variable "domain_name" {
+  description = "Nom de domaine principal"
+  default     = "sneakerportfolio.eu"
+}
+
+variable "create_api_subdomain" {
+  default = true
 }

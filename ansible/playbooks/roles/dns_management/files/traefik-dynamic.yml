@@ -1,0 +1,15 @@
+http:
+  routers:
+    # Router pour le dashboard Traefik
+    traefik-dashboard:
+      rule: "Host(`traefik.sneakerportfolio.eu`)"
+      service: "api@internal"
+      entryPoints:
+        - "web"
+    
+    # Router pour health check
+    ping:
+      rule: "Path(`/ping`) || Path(`/health`)"
+      service: "ping@internal"
+      entryPoints:
+        - "web"

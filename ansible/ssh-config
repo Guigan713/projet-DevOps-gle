@@ -12,36 +12,37 @@ Host swarm-bastion
     HostName 35.195.240.140
     Port 22
 
-# LEADER SWARM (manager-1)
-Host swarm-leader manager-1 swarm-manager-1
-    HostName 10.0.2.6
+# LEADER SWARM (manager_1)
+Host swarm-leader manager_1 swarm-manager-1
+    HostName 10.0.2.4
     Port 22
     ProxyJump swarm-bastion
-    LocalForward 8080 34.140.50.4:80
-    LocalForward 8443 34.140.50.4:443
-    LocalForward 9090 34.140.50.4:9090
+    LocalForward 7000 34.8.188.63:80
+    LocalForward 8443 34.8.188.63:443
+    LocalForward 8080 34.8.188.63:8080
+    LocalForward 9090 34.8.188.63:9090
     LocalForward 3000 127.0.0.1:3000
     LocalForward 9000 127.0.0.1:9000
 
-# AUTRE MANAGER (manager-2)
-Host manager-2 swarm-manager-2
+# AUTRE MANAGER (manager_2)
+Host manager_2 swarm-manager-2
     HostName 10.0.2.5
     Port 22
     ProxyJump swarm-bastion
 
-# AUTRE MANAGER (manager-3)
-Host manager-3 swarm-manager-3
-    HostName 10.0.2.4
+# AUTRE MANAGER (manager_3)
+Host manager_3 swarm-manager-3
+    HostName 10.0.2.6
     Port 22
     ProxyJump swarm-bastion
 
 # WORKERS
-Host worker-1 swarm-worker-1
+Host worker_1 swarm-worker-1
     HostName 10.0.2.2
     Port 22
     ProxyJump swarm-bastion
 
-Host worker-2 swarm-worker-2
+Host worker_2 swarm-worker-2
     HostName 10.0.2.3
     Port 22
     ProxyJump swarm-bastion
@@ -57,6 +58,6 @@ Host swarm-deploy
     LocalForward 9000 localhost:9000
 
 Host swarm-lb load-balancer
-    HostName 34.140.50.4
+    HostName 34.8.188.63
     Port 22
     ProxyJump swarm-bastion

@@ -42,6 +42,17 @@
         mode: '0440'
         validate: 'visudo -cf %s'
 
+- name: copier la clé privée sur le bastion
+  hosts: bastion
+  become: yes
+  tasks:
+    - name: copier la clé privée vers le bastion
+      copy:
+        src: "/home/guillaume/.ssh/gcp-ssh-key"
+        dest: "/home/{{ ssh_user }}/.ssh/gcp-ssh-key"
+        owner: "{{ ssh_user }}"
+        group: "{{ ssh_user }}"
+        mode: '0600'
 
 # Installation Docker
 - name: Install Docker on all Swarm nodes
@@ -116,6 +127,7 @@
     - swarm_managers
     - swarm_workers
   become: yes
+  serial: 1
   roles:
     - docker_swarm
   tags:
@@ -141,7 +153,7 @@
 
 # Setup monitoring configurations
 - name: Configure monitoring stack
-  hosts: swarm_managers[0]
+  hosts: swarm_managers
   become: yes
   roles:
     - monitoring
@@ -156,6 +168,39 @@
     - app_build
   tags:
     - build
+
+- name: Configure static & Dynamic config
+  hosts: swarm_managers
+  become: yes
+  tags:
+    - config
+  tasks:
+    - name: Create Traefik configuration directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      become: true
+      loop:
+        - /opt/docker/traefik/config
+        - /opt/docker/traefik/ssl
+        - /opt/docker/traefik/logs
+
+    - name: Copy static Traefik configuration (GCP Load Balancer)
+      copy:
+        src: roles/dns_management/files/traefik-gcp.yml
+        dest: /opt/docker/traefik/config/traefik.yml
+        owner: root
+        group: root
+        mode: '0644'
+      become: true
+
+    - name: Generate Traefik dynamic configuration
+      copy:
+        src: roles/dns_management/files/traefik-dynamic.yml
+        dest: /opt/docker/traefik/config/dynamic.yml
+        mode: '0644'
+      become: true
 
 # gestion des images et versionning
 - name: Build & push frontend/backend images + generate tag
@@ -173,8 +218,9 @@
 
     - name: Sauver deploy_version pour les autres plays
       copy:
-        dest: /tmp/deploy_version.txt
+        dest: "/tmp/deploy_version.txt"
         content: "{{ deploy_version }}"
+        mode: '0644'
 
     - name: Build et push l'image Docker Backend
       community.docker.docker_image:
@@ -200,7 +246,7 @@
     - name: Récupérer le deploy_version généré en local
       delegate_to: localhost
       slurp:
-        src: /tmp/deploy_version.txt
+        src: "/tmp/deploy_version.txt"
       register: deploy_version_file
 
     - name: Mettre deploy_version en variable de fait
@@ -232,6 +278,9 @@
     - name: Get the node name where the MySQL service is running
       command: docker service ps --filter 'desired-state=running' --format '{{ "{{.Node}}" }}' {{ db_service_name }}
       register: db_node_name
+    
+    - debug:
+        var: db_node_name
 
     - name: Copie le script SQL sur le noeud porteur DB
       copy:
@@ -243,25 +292,31 @@
       delegate_to: "{{ db_node_name.stdout }}"
 
     - name: Trouve l'ID du container MySQL Swarm
-      shell: "docker ps --filter 'name={{ db_service_name }}' --format '{{ '{{.ID}}' }}'"
+      shell: "docker ps --filter 'label=com.docker.swarm.service.name={{ db_service_name }}' --format '{{ '{{.ID}}' }}'"
       register: mysql_cont
       delegate_to: "{{ db_node_name.stdout }}"
       changed_when: false
 
+    - name: DEBUG - qui tourne sur ce node
+      shell: docker ps
+      register: all_containers
+      delegate_to: "{{ db_node_name.stdout }}"
+    - debug:
+        var: all_containers.stdout_lines
+
     - name: Injecte le SQL d'init dans la BDD
       shell: |
         docker exec -i {{ mysql_cont.stdout }} \
-          mysql -u{{ db_user }} -p'{{ vault_db_password }}' {{ db_name }} < /tmp/sneakerportfolio.sql
+          mysql -u "{{ db_user }}" -p"{{ vault_db_password }}" "{{ db_name }}" < /tmp/sneakerportfolio.sql
       args:
         executable: /bin/bash
-      environment:
-        MYSQL_PWD: "{{ vault_db_password }}"
       delegate_to: "{{ db_node_name.stdout }}"
+      when: mysql_cont.stdout != ""
+      no_log: true
 
 - name: Configure DNS and SSL management
   hosts: swarm_managers
   become: yes
   roles:
     - role: dns_management
-      when: inventory_hostname == groups['swarm_managers'][0]
   tags: dns

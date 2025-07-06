@@ -13,7 +13,7 @@ function MyWorks({ pic }) {
             <Link to="/mypics" className="myworks-item-img">
                 <img
                     className="works-img"
-                    src={`${API_URL}/images/${pic.shoe_img}`}
+                    src={`${API_URL}/api/images/${pic.shoe_img}`}
                     alt="pics"
                 />
             </Link>

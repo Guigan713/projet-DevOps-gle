@@ -109,7 +109,7 @@
       "targets": [
         {
           "expr": "avg(rate(node_cpu_seconds_total{mode=\"user\"}[1m])) by (instance) * 100",
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{ '{{' }}instance{{ '}}' }}",
           "refId": "A"
         }
       ],
@@ -127,8 +127,8 @@
             "mode": "absolute",
             "steps": [
               {"color": "green","value": null},
-              {"color": "yellow","value": 70 * 1024 * 1024 * 1024},
-              {"color": "red","value": 90 * 1024 * 1024 * 1024}
+              {"color": "yellow","value": 75161927680},
+              {"color": "red","value": 96636764160}
             ]
           }
         }
@@ -139,7 +139,7 @@
       "targets": [
         {
           "expr": "avg(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) by (instance)",
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{ '{{' }}instance{{ '}}' }}",
           "refId": "A"
         }
       ],
@@ -166,17 +166,17 @@
       "targets": [
         {
           "expr": "sum(rate(traefik_service_requests_total{code=~\"2..\"}[5m])) by (service)",
-          "legendFormat": "2xx - {{service}}",
+          "legendFormat": "2xx - {{ '{{' }}service{{ '}}' }}",
           "refId": "A"
         },
         {
           "expr": "sum(rate(traefik_service_requests_total{code=~\"4..\"}[5m])) by (service)",
-          "legendFormat": "4xx - {{service}}",
+          "legendFormat": "4xx - {{ '{{' }}service{{ '}}' }}",
           "refId": "B"
         },
         {
           "expr": "sum(rate(traefik_service_requests_total{code=~\"5..\"}[5m])) by (service)",
-          "legendFormat": "5xx - {{service}}",
+          "legendFormat": "5xx - {{ '{{' }}service{{ '}}' }}",
           "refId": "C"
         }
       ],
@@ -197,7 +197,7 @@
       "targets": [
         {
           "expr": "up{job=\"myapp-backend\"}",
-          "legendFormat": "{{instance}} - Backend up",
+          "legendFormat": "{{ '{{' }}instance{{ '}}' }} - Backend up",
           "refId": "A"
         }
       ],
@@ -218,7 +218,7 @@
       "targets": [
         {
           "expr": "rate(http_requests_total{job=\"myapp-backend\"}[5m])",
-          "legendFormat": "Backend requests: {{instance}}",
+          "legendFormat": "Backend requests: {{ '{{' }}instance{{ '}}' }}",
           "refId": "A"
         }
       ],
@@ -239,7 +239,7 @@
       "targets": [
         {
           "expr": "rate(myapp_backend_errors_total[5m])",
-          "legendFormat": "Backend errors: {{instance}}",
+          "legendFormat": "Backend errors: {{ '{{' }}instance{{ '}}' }}",
           "refId": "A"
         }
       ],
@@ -263,7 +263,7 @@
       "targets": [
         {
           "expr": "avg(rate(container_cpu_usage_seconds_total{image!=\"\",name!=\"\"}[5m]) * 100) by (name)",
-          "legendFormat": "{{name}}"
+          "legendFormat": "{{ '{{' }}name{{ '}}' }}"
         }
       ],
       "title": "Container CPU Usage (%)",
@@ -278,7 +278,7 @@
       "targets": [
         {
           "expr": "avg(container_memory_usage_bytes{image!=\"\",name!=\"\"}) by (name)",
-          "legendFormat": "{{name}}"
+          "legendFormat": "{{ '{{' }}name{{ '}}' }}"
         }
       ],
       "title": "Container Memory Usage",
@@ -293,7 +293,7 @@
       "targets": [
         {
           "expr": "max(container_restart_count{image!=\"\",name!=\"\"}) by (name)",
-          "legendFormat": "{{name}}"
+          "legendFormat": "{{ '{{' }}name{{ '}}' }}"
         }
       ],
       "title": "Container Restarts",

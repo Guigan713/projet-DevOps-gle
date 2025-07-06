@@ -15,6 +15,13 @@ provider "google" {
   zone = var.zone
 }
 
+resource "google_compute_global_address" "swarm_lb_ip" {
+  name         = "${var.project_name}-lb-ip"
+  project      = var.project
+  address_type = "EXTERNAL"
+  ip_version   = "IPV4"
+}
+
 module "instances" {
   source = "./modules/instances"
 
@@ -57,6 +64,8 @@ module "security_groups" {
   mon_ip              = var.mon_ip
   public_subnet_cidr  = var.public_subnet_cidr
   private_subnet_cidr = var.private_subnet_cidr
+  project_name = var.project_name
+  project = var.project
   
   depends_on = [module.network]
 }
@@ -75,13 +84,20 @@ module "gcp_backup" {
   environment          = var.environment
 }
 
-module "dns" {
-  count  = var.enable_dns ? 1 : 0
-  source = "./modules/dns"
-  
-  project     = var.project
-  domain_name = var.domain_name
-  
-  # Pointe vers le Load Balancer Swarm
-  swarm_lb_ip = module.instances.swarm_lb_ip
+# Module Load Balancer
+module "load-balancer" {
+  source = "./modules/load-balancer"
+
+  project_id   = var.project
+  project_name = "projet-devops-gle"
+  zone         = var.zone
+
+  swarm_lb_ip = google_compute_global_address.swarm_lb_ip.address
+  manager_instances = module.instances.swarm_manager_self_links
+  worker_instances  = module.instances.swarm_worker_self_links
+
+  depends_on = [
+    module.instances,
+    module.network
+  ]
 }

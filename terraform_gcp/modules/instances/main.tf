@@ -1,10 +1,3 @@
-# IP statique pour le Load Balancer
-resource "google_compute_address" "swarm_lb_ip" {
-  name    = "swarm-lb-ip"
-  region  = var.region
-  project = var.project
-}
-
 resource "google_compute_instance" "bastion" {
   name         = "bastion-host"
   machine_type = "e2-micro"
@@ -47,13 +40,6 @@ resource "google_compute_instance" "swarm_manager" {
   network_interface {
     network    = var.vpc_id
     subnetwork = var.private_subnet_id
-    
-    dynamic "access_config" {
-      for_each = count.index == 0 ? [1] : []
-      content {
-        nat_ip = google_compute_address.swarm_lb_ip.address
-      }
-    }
   }
 
   metadata = {

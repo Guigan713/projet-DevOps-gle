@@ -14,29 +14,68 @@ Description
 ## Architecture de sécurité
 
 ```
-Internet
-    ↓ SSH (22), HTTP (80), HTTPS (443)
-[Reverse Proxy] (Bastion Host)
-    ↓ SSH (22) vers instances internes
-    ↓ HTTP (3000) vers Frontend
-    ↓ HTTP (3000, 9090) vers Monitoring
-[Frontend] ←→ [Backend] ←→ [Database]
-    ↑             ↑          ↑
-[Monitoring] ←←←←←←←←←←←←←←←←←←←
+                          +---------------------+
+                          |      Internet       |
+                          +---------------------+
+                                   |
+                                   v
+                   +----------------------------------+
+                   |   Load Balancer (Public IP)      |
+                   +----------------------------------+
+                       /        |         \
+                      /         |          \
+                     v          v           v
+             +---------+   +---------+   +---------+
+             |Manager1 |   |Manager2 |   |Manager3 |
+             |10.0.1.4 |   |10.0.1.3 |   |10.0.1.2 |
+             +---------+   +---------+   +---------+
+                \    | \    /  |    /  |   /
+                 \   |  \  /   |   /   |  /
+                  \  |   \/    |  /    | /
+                   Full-mesh entre Managers
+                     (ports Swarm, overlay)
+                      /    |        \
+                     /     |         \
+           +--------v-------+     +--------v--------+
+           |   Worker1      |     |    Worker2      |
+           |   10.0.2.2     |     |   10.0.2.3      |
+           +----------------+     +-----------------+
+                  |                     |
+                  |                     |
+         +-------------------+       +---------------------------+
+         |     Bastion SSH   |<------|  Admin (ssh/monitoring)   |
+         |     (10.0.1.10)   |       +---------------------------+
+         +-------------------+
+                  |
+           +---------------+
+           |   Backup GCS  |
+           +---------------+
 ```
 
-## Resources créées
 
-| Resource                     | Nom                       | Direction | Protocol/Ports            | Source → Target             | Description      |
-|------------------------------|---------------------------|-----------|---------------------------|-----------------------------|------------------|
-| `google_compute_firewall`    | swarm-manager-ssh         | INGRESS   | TCP/22                    | admin IP → managers         | SSH sécurisé     |
-| `google_compute_firewall`    | swarm-internal-ssh        | INGRESS   | TCP/22                    | managers → nodes            | Bastion SSH      |
-| `google_compute_firewall`    | swarm-internal-communication | INGRESS   | TCP,UDP,ICMP              | subnets → nodes             | Swarm overlay    |
-| `google_compute_firewall`    | swarm-cluster-ports       | INGRESS   | TCP/2377,7946; UDP/4789,7946 | subnets → nodes          | Docker Cluster   |
-| `google_compute_firewall`    | swarm-web-ingress         | INGRESS   | TCP/80,443                | Internet → managers         | Web traffic      |
-| `google_compute_firewall`    | swarm-monitoring          | INGRESS   | TCP/3000,9090,9093        | admin IP → managers         | Monitoring       |
-| `google_compute_firewall`    | swarm-outbound            | EGRESS    | ALL                       | nodes → Internet            | Internet access  |
+- **LB HTTP/HTTPS → Managers**
+- **Managers** : full-mesh entre eux, accès aux Workers  
+- **Workers** : aucun accès direct depuis Internet  
+- **SSH** : seulement via Bastion  
+- **Monitoring** : via manager, restreint à IP admin
 
+---
+
+## Règles Firewall créées
+
+| Resource                     | Nom                       | Direction | Protocol/Ports                  | Source → Target                 | Description      |
+|------------------------------|---------------------------|-----------|------------------------------|-------------------------------|------------------|
+| `google_compute_firewall`    | swarm-lb-to-nodes         | INGRESS   | TCP/80,443                      | LB / subnet → managers         | HTTP/HTTPS via LB|
+| `google_compute_firewall`    | lb-health-check           | INGRESS   | TCP/80,443                      | IPs GCP → managers             | Health check LB  |
+| `google_compute_firewall`    | ssh-bastion-admin         | INGRESS   | TCP/22                           | IP admin → bastion             | SSH sécurisé     |
+| `google_compute_firewall`    | bastion-ssh-to-nodes      | INGRESS   | TCP/22                           | bastion → managers/workers     | SSH proxy interne|
+| `google_compute_firewall`    | swarm-internal-ssh        | INGRESS   | TCP/22                           | manager → all nodes            | SSH interne      |
+| `google_compute_firewall`    | swarm-internal-communication | INGRESS | TCP/2377,7946; UDP/4789,7946     | subnets → swarm nodes          | Swarm/overlay    |
+| `google_compute_firewall`    | swarm-monitoring          | INGRESS   | TCP/3000,9090,9093               | IP admin → managers            | Monitoring       |
+| `google_compute_firewall`    | swarm-node-exporter       | INGRESS   | TCP/9100                         | subnets → swarm nodes          | Node exporter    |
+| `google_compute_firewall`    | swarm-outbound            | EGRESS    | ALL                              | swarm nodes → Internet         | Internet access  |
+
+---
 
 ## Variables requises
 
@@ -44,43 +83,42 @@ Internet
 |----------------------|---------|-----------------------------------------------------|----------------------|
 | `vpc_name`           | string  | Nom du réseau VPC                                   | `"main-vpc"`         |
 | `vpc_id`             | string  | ID du réseau VPC                                    | `"..."`              |
-| `mon_ip`             | string  | Adresse IP administrateur (ssh/monitoring)          | `"203.0.113.1"`      |
+| `mon_ip`             | string  | Adresse IP administrateur (SSH/monitoring)          | `"203.0.113.1"`      |
 | `public_subnet_cidr` | string  | CIDR du sous-réseau public                          | `"10.0.1.0/24"`      |
 | `private_subnet_cidr`| string  | CIDR du sous-réseau privé                           | `"10.0.2.0/24"`      |
+| `project`            | string  | ID du projet GCP                                    | `"my-gcp-project"`   |
+| `project_name`       | string  | Nom du projet                                      | `"swarm-prod"`       |
 
+---
 
 ## Tags utilisés
 
 | Tag             | Services         | Usage                                 |
 |-----------------|------------------|---------------------------------------|
-| `swarm-manager` | Managers         | Cluster managers, exposés (web/ssh)   |
+| `swarm-manager` | Managers         | Cluster managers, ports web/moni/ssh  |
 | `swarm-worker`  | Workers          | Workers Swarm                         |
-| `swarm-node`    | Tous (label)     | Scopes inter-Swarm & overlay network  |
+| `swarm-node`    | Tous (label)     | Swarm/Overlay, cluster interne        |
+| `bastion`       | Bastion          | Permet SSH via IP admin               |
+
+---
 
 ## Outputs
 
 | Output                | Description                                              |
 |-----------------------|----------------------------------------------------------|
-| `swarm_firewall_rules`| Liste des règles firewall créées par le module           |
-| `swarm_network_tags`  | Tags réseau managers / workers Swarm à propager sur VMs  |
+| `swarm_firewall_rules`| Liste des règles firewall créées                        |
+| `swarm_network_tags`  | Tags réseau managers / workers / bastion à appliquer    |
 
+---
 
 ## Sécurité implémentée
 
-### Principe du moindre privilège
-- Chaque service n'a accès qu'aux ports nécessaires
-- Sources définies par tags ou IP spécifiques
-- Pas d'accès SSH direct aux services internes
+- Accès SSH seulement via Bastion ou IP admin déclarée
+- LB GCP en frontal et règles Health Check GCP obligatoires
+- Managers & workers séparés, aucun accès direct public  
+- Tous les ports restreints : moindre privilège absolu
+- Monitoring restreint à l’IP de l’admin
 
-### Bastion Host (Reverse Proxy)
-- Seul point d'entrée SSH depuis Internet
-- Accès SSH vers toutes les instances internes
-- Simplifie la gestion des accès
-
-### Isolation réseau
-- Services internes non accessibles depuis Internet
-- Communication inter-services contrôlée
-- Monitoring centralisé mais sécurisé
 
 ## Ports et services
 

@@ -43,14 +43,6 @@
     group: "{{ ssh_user }}"
     mode: '0755'
 
-- name: Créer dossier letsencrypt pour traefik
-  file:
-    path: "/opt/docker/letsencrypt"
-    state: directory
-    owner: "{{ ssh_user }}"
-    group: "{{ ssh_user }}"
-    mode: '0700'
-
 - name: Copy environment file
   template:
     src: templates/app.env.j2
@@ -58,14 +50,3 @@
     owner: "{{ ssh_user }}"
     group: "{{ ssh_user }}"
     mode: '0600'
-
-# - name: Copier la clé GCP DNS Challenge
-#   copy:
-#     src: "{{ gcp_credentials_file }}"
-#     dest: "{{ app_directory }}/gcp-service-account.json"
-#     owner: "{{ ssh_user }}"
-#     group: "{{ ssh_user }}"
-#     mode: '0600'
-#   become: true
-#   when: gcp_credentials_file is defined and gcp_credentials_file | length > 0
-#   ignore_errors: false

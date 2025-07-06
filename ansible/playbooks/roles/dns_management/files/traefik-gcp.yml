@@ -1,0 +1,31 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  traefik:
+    address: ":8080"
+
+api:
+  dashboard: true
+  insecure: true
+
+ping: {}
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    swarmMode: true
+    network: traefik-public
+    watch: true
+
+  file:
+    filename: /opt/docker/traefik/config/dynamic.yml
+    watch: true
+
+metrics:
+  prometheus: {}
+
+log:
+  level: DEBUG

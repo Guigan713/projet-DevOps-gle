@@ -3,7 +3,7 @@ resource "null_resource" "generate_swarm_config" {
     # Se déclenche à chaque changement d'infrastructure
     swarm_managers = join(",", module.instances.swarm_manager_ips)
     swarm_workers  = join(",", module.instances.swarm_worker_ips)
-    swarm_lb_ip    = module.instances.swarm_lb_ip
+    swarm_lb_ip    = module.load-balancer.swarm_lb_ip
     leader_ip      = module.instances.swarm_leader_ip
     bastion_public_ip = module.instances.bastion_public_ip
     always_run     = timestamp()

@@ -18,7 +18,7 @@ COPY . .
 
 RUN npm run build
 
-RUN echo "window._env_ = { API_URL: 'https://projet-devops-gle.fr/api' };" > build/env.js
+RUN echo "window._env_ = { API_URL: 'https://api.sneakerportfolio.eu', BUILD_TIME: '$(date +%s)' };" > build/env.js
 
 # Crée un nouveau stage "production" basé sur le stage "build"
 FROM nginx:alpine AS production

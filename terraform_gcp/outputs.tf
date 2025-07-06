@@ -10,7 +10,7 @@ output "swarm_worker_ips" {
 
 output "swarm_load_balancer_ip" {
   description = "IP du Load Balancer Swarm (point d'entrée principal)"
-  value       = module.instances.swarm_lb_ip
+  value       = module.load-balancer.swarm_lb_ip
 }
 
 output "bastion_public_ip" {
@@ -61,44 +61,6 @@ output "backup_bucket_url" {
   value       = module.gcp_backup.bucket_url
 }
 
-# Outputs DNS 
-output "domain_name_servers" {
-  description = "Serveurs de noms à configurer chez votre registrar"
-  value       = var.enable_dns ? module.dns[0].name_servers : null
-}
-
-output "domain_dns_name" {
-  description = "Nom de la zone DNS"
-  value       = var.enable_dns ? module.dns[0].dns_name : null
-}
-
-output "application_urls" {
-  description = "URLs d'accès à l'application"
-  value = var.enable_dns ? {
-    main  = "https://${var.domain_name}"
-    www   = "https://www.${var.domain_name}"
-    api   = var.create_api_subdomain ? "https://api.${var.domain_name}" : null
-    grafana = "https://grafana.${var.domain_name}"
-    prometheus = "https://prometheus.${var.domain_name}"
-    traefik = "https://traefik.${var.domain_name}"
-  } : {
-    main = "http://${module.instances.swarm_lb_ip}"
-    api  = "http://${module.instances.swarm_lb_ip}/api"
-    grafana = "http://${module.instances.swarm_lb_ip}/grafana"
-    prometheus = "http://${module.instances.swarm_lb_ip}/prometheus"
-    traefik = "http://${module.instances.swarm_lb_ip}/traefik"
-  }
-}
-
-# Outputs monitoring (conditionnels)
-# output "monitoring_urls" {
-#   description = "URLs des outils de monitoring"
-#   value = var.enable_monitoring ? {
-#     grafana    = var.enable_dns ? "https://monitoring.${var.domain_name}:3000" : "http://${module.swarm.load_balancer_ip}:3000"
-#     prometheus = var.enable_dns ? "https://monitoring.${var.domain_name}:9090" : "http://${module.swarm.load_balancer_ip}:9090"
-#   } : null
-# }
-
 # Outputs de déploiement
 output "deployment_commands" {
   description = "Commandes pour déployer vos services"
@@ -107,5 +69,37 @@ output "deployment_commands" {
     stack_ls     = "docker stack ls"
     service_ls   = "docker service ls"
     node_ls      = "docker node ls"
+  }
+}
+
+output "swarm_cluster_info" {
+  description = "Informations complètes du cluster Swarm"
+  value       = module.instances.swarm_cluster_info
+}
+
+output "load_balancer_status" {
+  description = "État du Load Balancer"
+  value       = module.load-balancer.swarm_lb_ip
+}
+
+output "ansible_inventory" {
+  description = "Variables pour générer l'inventaire Ansible"
+  value = {
+    bastion_public_ip = module.instances.bastion_public_ip
+    swarm_manager_ips = module.instances.swarm_manager_ips
+    swarm_worker_ips  = module.instances.swarm_worker_ips
+    swarm_leader_ip   = module.instances.swarm_leader_ip
+    lb_ip            = module.load-balancer.swarm_lb_ip
+  }
+}
+
+output "deployment_summary" {
+  description = "Résumé du déploiement"
+  value = {
+    cluster_size      = length(module.instances.swarm_manager_ips) + length(module.instances.swarm_worker_ips)
+    manager_count     = length(module.instances.swarm_manager_ips)
+    worker_count      = length(module.instances.swarm_worker_ips)
+    load_balancer_ip  = module.load-balancer.swarm_lb_ip
+    backup_enabled    = true
   }
 }

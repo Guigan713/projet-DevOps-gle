@@ -12,7 +12,7 @@ function MyPics() {
     useEffect(() => {
         const getPics = () => {
             axios
-            .get(`${API_URL}/pics`)
+            .get(`${API_URL}/api/pics`)
             .then(res => setPics(res.data))
         }
         getPics()

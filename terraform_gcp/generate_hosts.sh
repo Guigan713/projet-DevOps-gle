@@ -22,6 +22,19 @@ WORKER_IPS=$(terraform output -json swarm_worker_ips | jq -r '.[]') || error_exi
 LEADER_PRIVATE_IP=$(terraform output -raw swarm_leader_ip) || error_exit "Pas d'IP leader"
 BASTION_PUBLIC_IP=$(terraform output -raw bastion_public_ip) || error_exit "Pas d'IP publique de bastion"
 LB_IP=$(terraform output -raw swarm_load_balancer_ip) || error_exit "Pas d'IP LB"
+CLUSTER_INFO=$(terraform output -json swarm_cluster_info 2>/dev/null) || CLUSTER_INFO=""
+DEPLOYMENT_SUMMARY=$(terraform output -json deployment_summary 2>/dev/null) || DEPLOYMENT_SUMMARY=""
+
+if [[ -n "$DEPLOYMENT_SUMMARY" ]]; then
+    TOTAL_NODES=$(echo "$DEPLOYMENT_SUMMARY" | jq -r '.cluster_size // 0' 2>/dev/null)
+    MANAGER_COUNT_TOTAL=$(echo "$DEPLOYMENT_SUMMARY" | jq -r '.manager_count // 0' 2>/dev/null)
+    WORKER_COUNT_TOTAL=$(echo "$DEPLOYMENT_SUMMARY" | jq -r '.worker_count // 0' 2>/dev/null)
+else
+    # Fallback sur le calcul manuel
+    MANAGER_COUNT_TOTAL=$(echo "$MANAGER_IPS" | wc -l)
+    WORKER_COUNT_TOTAL=$(echo "$WORKER_IPS" | wc -l)
+    TOTAL_NODES=$((MANAGER_COUNT_TOTAL + WORKER_COUNT_TOTAL))
+fi
 
 # Créer dossier
 mkdir -p ../ansible/inventories
@@ -35,6 +48,12 @@ cat > "$INVENTORY_FILE" << INI_END
 ansible_user=deploy
 ansible_ssh_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ProxyJump=deploy@${BASTION_PUBLIC_IP}"
+load_balancer_ip=${LB_IP}
+swarm_leader_ip=${LEADER_PRIVATE_IP}
+bastion_public_ip=${BASTION_PUBLIC_IP}
+cluster_total_nodes=${TOTAL_NODES}
+cluster_manager_count=${MANAGER_COUNT_TOTAL}
+cluster_worker_count=${WORKER_COUNT_TOTAL}
 
 # MANAGERS
 [swarm_managers]
@@ -80,6 +99,12 @@ manager_1
 [bastion]
 swarm_bastion ansible_host=${BASTION_PUBLIC_IP} private_ip=${LEADER_PRIVATE_IP} lb_ip=${LB_IP} swarm_role=bastion
 INI_GROUPS
+
+cat >> "$INVENTORY_FILE" <<INI_BASTION_VARS
+
+[bastion:vars]
+ansible_ssh_common_args="-o StrictHostKeyChecking=no"
+INI_BASTION_VARS
 
 echo " Inventaire INI généré: $INVENTORY_FILE"
 echo " $(($MANAGER_COUNT-1)) managers, $(($WORKER_COUNT-1)) workers"

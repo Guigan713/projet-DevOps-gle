@@ -26,7 +26,7 @@ function MyWorksSection() {
     // },[])
     useEffect(() => {
         axios
-            .get(`${API_URL}/pics`)
+            .get(`${API_URL}/api/pics`)
             .then(res => {
                 console.log("API /pics res.data =", res.data);
                 // Toujours forcer un tableau

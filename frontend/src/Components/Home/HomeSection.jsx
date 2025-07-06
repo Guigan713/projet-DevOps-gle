@@ -16,13 +16,12 @@ import './HomeSection.css'
 const API_URL = window._env_?.API_URL || "http://localhost:5000";
 
 function HomeSection() {
-    console.log("HomeSection chargé !");
     const [, setPics] = useState([])
     const [home, setHome] = useState([])
     useEffect(() => {
         const getPics = () => {
             axios
-            .get(`${API_URL}/pics`)
+            .get(`${API_URL}/api/pics`)
             .then(res => setPics(res.data))
         }
         getPics()
@@ -30,8 +29,7 @@ function HomeSection() {
     useEffect(() => {
         const getHome = () => {
             axios
-                .get(`${API_URL}/home`)
-                // .then(res => setHome(res.data[0]))
+                .get(`${API_URL}/api/home`)
                 .then(res => {
                     if (res.data[0] && res.data[0].home_img) {
                         setHome(res.data[0]);
@@ -43,10 +41,6 @@ function HomeSection() {
         getHome()
     },[])
 
-    console.log("API_URL=", API_URL)
-    console.log('home=', home);
-    console.log('home.home_img=', home.home_img);
-
     return (
         <div className="home-section">
             <div className="home">
@@ -56,12 +50,12 @@ function HomeSection() {
                         <span className="home-name">{home.gui_title}</span>
                     </h1>
                     <div className="home-img">
-                        {/* <img src={`${API_URL}/images/${home.home_img}`}
+                        {/* <img src={`${API_URL}/api/images/${home.home_img}`}
                         alt="homepic"
                         /> */}
                         {home.home_img && (
                             <img
-                                src={`${API_URL}/images/${home.home_img}`}
+                                src={`${API_URL}/api/images/${home.home_img}`}
                                 alt="homepic"
                             />
                         )}

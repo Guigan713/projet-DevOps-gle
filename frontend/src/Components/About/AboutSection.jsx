@@ -13,7 +13,7 @@ function AboutSection() {
     useEffect(() => {
         const getAbout = () => {
             axios
-            .get(`${API_URL}/about`)
+            .get(`${API_URL}/api/about`)
             .then(res => setAbout(res.data[0]))
         }
         getAbout()
@@ -41,7 +41,7 @@ function AboutSection() {
                 <div className="about-section-right">
                     <img 
                         className="about-img"
-                        src={`${API_URL}/images/${about.about_img}`}
+                        src={`${API_URL}/api/images/${about.about_img}`}
                         alt="aboutpic"
                     />
                 </div>

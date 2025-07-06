@@ -18,17 +18,14 @@ dns_ttl: 300
 dns_services:
   - name: "traefik"
     subdomain: "traefik"
-    domain: "traefik.{{ domain_name }}"
     port: 8080
     enabled: true
   - name: "grafana" 
     subdomain: "grafana"
-    domain: "grafana.{{ domain_name }}"
     port: 3000
     enabled: true
   - name: "prometheus"
     subdomain: "prometheus"
-    domain: "prometheus.{{ domain_name }}"
     port: 9090
     enabled: true
   - name: "portainer"
@@ -37,7 +34,6 @@ dns_services:
     enabled: true
   - name: "api"
     subdomain: "api"
-    domain: "api.{{ domain_name }}"
     port: 5000
     enabled: "{{ create_api_subdomain | default(false) }}"
   - name: "admin"
