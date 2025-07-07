@@ -50,7 +50,7 @@ jobs:
 
       - name: Configure SSH for Bastion & Private Access
         run: |
-          cp ansible/ssh-config ~/.ssh/config
+          sed 's|~/.ssh/gcp-ssh-key|/home/runner/.ssh/gcp-ssh-key|g' ansible/ssh-config > ~/.ssh/config
           chmod 600 ~/.ssh/config
 
       - name: Run Ansible Playbook
