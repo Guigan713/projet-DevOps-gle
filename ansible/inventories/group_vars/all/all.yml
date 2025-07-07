@@ -6,7 +6,7 @@ app_environment: production
 ssh_user: "deploy"
 ssh_public_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/gcp-ssh-key.pub') }}"
 # ssh_public_key: /home/guillaume/.ssh/gcp-ssh-key.pub
-gcp_credentials_file: "{{ lookup('env','PWD') }}/terraform_gcp/credentials/gcp-sa-key.json"
+gcp_credentials_file: "/home/guillaume/projet-DevOps-gle/terraform_gcp/credentials/gcp-sa-key.json"
 gcp_swarm_sa_json: "{{ app_directory }}/gcp-service-account.json"
 
 domain_name: "sneakerportfolio.eu"

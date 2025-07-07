@@ -1,6 +1,6 @@
 ---
 # Configuration DNS Google Cloud
-gcp_credentials_file: "{{ lookup('env','PWD') }}/terraform_gcp/credentials/gcp-sa-key.json"
+gcp_credentials_file: "/home/guillaume/projet-DevOps-gle/terraform_gcp/credentials/gcp-sa-key.json"
 gcp_project: "{{ project_id }}"
 gcp_auth_kind: "serviceaccount"
 gcp_service_account_file: "{{ gcp_credentials_file }}"
