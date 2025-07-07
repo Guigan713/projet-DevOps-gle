@@ -1,13 +1,10 @@
 name: Deploy projet DevOps
 
 on:
-  # workflow_run:
-  #   workflows: ["Test Workflow"]
-  #   types:
-  #     - completed
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Test Workflow"]
+    types:
+      - completed
 
 jobs:
   deploy-ansible:
@@ -50,15 +47,8 @@ jobs:
 
       - name: Configure SSH for Bastion & Private Access
         run: |
-          # Copier la config SSH en remplaçant le chemin de la clé
           sed 's|~/.ssh/gcp-ssh-key|/home/runner/.ssh/gcp-ssh-key|g' ansible/ssh-config > ansible/ssh-config-runner
           chmod 600 ansible/ssh-config-runner
-          echo "SSH config created:"
-          cat ansible/ssh-config-runner
-
-      - name: Test SSH Connection to Bastion
-        run: |
-          ssh -F ansible/ssh-config-runner -o ConnectTimeout=10 swarm-bastion "echo 'Bastion connection OK'"
 
       - name: Run Ansible Playbook
         run: |
