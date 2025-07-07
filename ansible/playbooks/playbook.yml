@@ -48,7 +48,7 @@
   tasks:
     - name: copier la clé privée vers le bastion
       copy:
-        src: "/home/guillaume/.ssh/gcp-ssh-key"
+        src: "{{ lookup('env','HOME') }}/.ssh/gcp-ssh-key"
         dest: "/home/{{ ssh_user }}/.ssh/gcp-ssh-key"
         owner: "{{ ssh_user }}"
         group: "{{ ssh_user }}"
