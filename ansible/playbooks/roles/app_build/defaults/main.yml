@@ -1,4 +1,3 @@
-# Services à vérifier après déploiement
 app_services:
   - traefik
   - frontend
@@ -9,7 +8,7 @@ app_services:
 
 project_name: "projet-devops-gle"
 app_directory: "/opt/{{ app_name }}"
-gcp_credentials_file: "/home/guillaume/projet-DevOps-gle/terraform_gcp/credentials/gcp-sa-key.json"
+gcp_credentials_file: "{{ lookup('env','PWD') }}/terraform_gcp/credentials/gcp-sa-key.json"
 gcp_swarm_sa_json: "{{ app_directory }}/gcp-service-account.json"
 
 frontend_port: 7000
