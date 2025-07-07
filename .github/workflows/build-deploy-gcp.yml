@@ -59,6 +59,7 @@ jobs:
           ansible-playbook -i ansible/inventories/swarm-hosts.ini ansible/playbooks/playbook.yml \
             --private-key ~/.ssh/gcp-ssh-key \
             --vault-password-file ansible/.vault_pass \
+            --ssh-extra-args="-F ~/.ssh/config" \
             -u deploy -vvv
         env:
           ANSIBLE_CONFIG: ansible/ansible.cfg
