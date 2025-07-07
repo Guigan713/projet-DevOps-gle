@@ -63,6 +63,6 @@ jobs:
         env:
           ANSIBLE_CONFIG: ansible/ansible.cfg
           VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
-          GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+          GCP_SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
           GCP_SSH_PUBLIC_KEY: ${{ secrets.GCP_SSH_PUBLIC_KEY}}
 
