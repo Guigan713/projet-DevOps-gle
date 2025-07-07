@@ -47,15 +47,21 @@ jobs:
 
       - name: Configure SSH for Bastion & Private Access
         run: |
-          sed 's|~/.ssh/gcp-ssh-key|/home/runner/.ssh/gcp-ssh-key|g' ansible/ssh-config > ansible/ssh-config-runner
-          chmod 600 ansible/ssh-config-runner
+          cp ansible/ssh-config ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: Create GCP Service Account credentials file
+        run: |
+          mkdir -p terraform_gcp/credentials
+          echo '${{ secrets.GCP_SA_KEY }}' > terraform_gcp/credentials/gcp-sa-key.json
+          chmod 600 terraform_gcp/credentials/gcp-sa-key.json
 
       - name: Run Ansible Playbook
         run: |
           echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > ansible/.vault_pass
           ansible-playbook -i ansible/inventories/swarm-hosts.ini ansible/playbooks/playbook.yml \
+            --private-key ~/.ssh/gcp-ssh-key \
             --vault-password-file ansible/.vault_pass \
-            --ssh-extra-args="-F ansible/ssh-config-runner" \
             -u deploy -vvv
         env:
           ANSIBLE_CONFIG: ansible/ansible.cfg
